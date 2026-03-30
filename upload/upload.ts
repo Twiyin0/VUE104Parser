@@ -15,7 +15,7 @@ const config = {
   port:            parseInt(process.env.SSH_PORT ?? '22', 10),
   username:        process.env.SSH_USER     ?? 'name',
   password:        process.env.SSH_PASSWORD ?? 'password',
-  excludes: ['node_modules/**', '.git/**', '*.tar.gz', '.env*', 'upload/**'],
+  excludes: ['node_modules/**', '.git/**', '*.tar.gz', '.env*', 'upload/**','old/**','dist/**','.yarn/**','*.log'],
 }
 
 function createArchive(): Promise<string> {

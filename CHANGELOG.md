@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [1.0.2] - 2026-03-30
+
+### 修复
+
+- **`CollapseSection` 折叠动画期间 `mb-0` 提前生效**：将 `collapsed = true` 从 `requestAnimationFrame` 回调移至 `transitionend` 事件，确保折叠 CSS 类在动画结束后才切换，避免底部间距在动画中途突变。`toggle()` 和 `close()` 均已修正。
+- **遥测/遥信/电能量/遥控区块间距偏大**：`HexParser` 结果 grid 容器同时存在 `gap-4`（1rem）和子元素 `.cs` 的 `mb-4`（1rem），导致间距约 2rem，移除 `gap-4` 后恢复与页面其他区块一致的 1rem 间距。
+- **`upload.ts` 打包排除项补全**：新增排除 `old/**`、`dist/**`、`.yarn/**`、`*.log`，避免上传无关文件。
+
+---
+
 ## [1.0.1] - 2026-03-30
 
 ### 修复

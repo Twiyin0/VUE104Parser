@@ -24,8 +24,10 @@ function toggle() {
       bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
       requestAnimationFrame(() => {
         bodyRef.value.style.maxHeight = '0px'
-        collapsed.value = true
       })
+      bodyRef.value.addEventListener('transitionend', () => {
+        collapsed.value = true
+      }, { once: true })
     }
   }
 }
@@ -42,8 +44,10 @@ function close() {
     bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
     requestAnimationFrame(() => {
       bodyRef.value.style.maxHeight = '0px'
-      collapsed.value = true
     })
+    bodyRef.value.addEventListener('transitionend', () => {
+      collapsed.value = true
+    }, { once: true })
   }
 }
 

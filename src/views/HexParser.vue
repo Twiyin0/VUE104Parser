@@ -383,7 +383,7 @@ function renderAll(results: any[]) {
       <div class="error-box" :class="{ show: showError }">{{ errorMsg }}</div>
 
       <!-- Results grid -->
-      <div class="grid grid-cols-1 gap-4">
+      <div class="grid grid-cols-1">
 
         <CollapseSection ref="secYc" icon="📊" title="遥测" subtitle="YC · TI=9/11/13" :count="counts.yc">
           <div class="table-wrap">
