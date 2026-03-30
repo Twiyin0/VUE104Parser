@@ -463,13 +463,13 @@ function downloadLog() {
         <!-- Protocol Selection -->
         <div class="flex flex-col gap-1.5 p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 min-w-[200px]">
           <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">协议强制模式</div>
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <label class="flex items-center gap-2 text-sm cursor-pointer dark:text-slate-400">
             <input type="radio" v-model="forceProto" value="auto" class="accent-blue-500" /> 🔍 自动识别（推荐）
           </label>
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <label class="flex items-center gap-2 text-sm cursor-pointer dark:text-slate-400">
             <input type="radio" v-model="forceProto" value="104" class="accent-blue-500" /> <span class="proto-104">104</span> 强制 IEC 104
           </label>
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <label class="flex items-center gap-2 text-sm cursor-pointer dark:text-slate-400">
             <input type="radio" v-model="forceProto" value="101" class="accent-blue-500" /> <span class="proto-101">101</span> 强制 IEC 101
           </label>
         </div>
