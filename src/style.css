@@ -20,11 +20,12 @@
 
   /* 折叠区块 */
   .cs { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 overflow-hidden; }
+  .cs.collapsed { @apply mb-0; }
   .cs-head {
     @apply flex items-center justify-between px-4 py-3 cursor-pointer select-none
            bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors;
   }
-  .cs-head-left { @apply flex items-center gap-2 font-semibold text-sm text-slate-700 dark:text-slate-200; }
+  .cs-head-left { @apply flex items-center gap-2 font-semibold text-sm text-slate-700 dark:text-slate-200; gap: 0.5rem; }
   .cs-badge {
     @apply inline-flex items-center justify-center text-xs font-bold px-1.5 py-0.5 rounded-full
            bg-blue-500 text-white min-w-[20px];

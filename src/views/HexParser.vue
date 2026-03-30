@@ -438,7 +438,7 @@ function renderAll(results: any[]) {
       </div>
 
       <!-- 101链路层 -->
-      <CollapseSection ref="secLink" icon="🔗" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-0">
+      <CollapseSection ref="secLink" icon="🔗" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-4">
         <div class="table-wrap">
           <table><thead><tr>
             <th>链路地址</th><th>帧类型</th><th>方向/PRM</th><th>FC功能码</th>
@@ -449,7 +449,7 @@ function renderAll(results: any[]) {
       </CollapseSection>
 
       <!-- 其他事件 -->
-      <CollapseSection ref="secEvents" icon="📋" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events">
+      <CollapseSection ref="secEvents" icon="📋" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events" class="mt-4">
         <div class="log-panel" v-html="eventLog" />
       </CollapseSection>
 

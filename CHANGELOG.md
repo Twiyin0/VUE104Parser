@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [1.0.1] - 2026-03-30
+
+### 修复
+
+- **`CollapseSection` 折叠时底部 margin 多余**：`.cs.collapsed` 新增 `mb-0`，折叠状态下不再产生多余的 1rem 底部间距。
+- **HexParser 底部两个区块（101链路层帧、其他事件）无间距**：两个游离于主容器外的 `CollapseSection` 新增 `class="mt-4"`，保证无论上方区块展开/折叠均有固定间隔。
+
+---
+
 ## [1.0.0] - 2026-03-29
 
 ### 项目重构：原生 HTML/JS → Vue 3 + TypeScript
