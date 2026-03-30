@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tar.gz
+.env
+.env.*
+!.env.example
+yarn.lock
+package-lock.json
+.yarn
+old

@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── 滚动条 & 基础 ── */
+@layer base {
+  html { @apply antialiased; }
+  * { @apply box-border; }
+}
+
+/* ── 自定义组件类 ── */
+@layer components {
+  /* 协议徽章 */
+  .proto-104 { @apply inline-block text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.5 rounded mr-1 align-middle whitespace-nowrap; }
+  .proto-101 { @apply inline-block text-xs font-bold bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1.5 py-0.5 rounded mr-1 align-middle whitespace-nowrap; }
+
+  /* 点名单元格 */
+  .pname      { @apply text-emerald-800 dark:text-emerald-400 font-semibold text-xs max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap block; }
+  .pname-none { @apply text-gray-300 dark:text-gray-600 text-xs; }
+
+  /* 折叠区块 */
+  .cs { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 overflow-hidden; }
+  .cs-head {
+    @apply flex items-center justify-between px-4 py-3 cursor-pointer select-none
+           bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors;
+  }
+  .cs-head-left { @apply flex items-center gap-2 font-semibold text-sm text-slate-700 dark:text-slate-200; }
+  .cs-badge {
+    @apply inline-flex items-center justify-center text-xs font-bold px-1.5 py-0.5 rounded-full
+           bg-blue-500 text-white min-w-[20px];
+  }
+  .cs-badge.zero { @apply bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400; }
+  .cs-chevron { @apply text-slate-400 transition-transform duration-200; }
+  .cs.collapsed .cs-chevron { @apply -rotate-90; }
+  .cs-body { @apply transition-all duration-300 overflow-hidden; }
+  .cs.collapsed .cs-body { @apply max-h-0 opacity-0; }
+
+  /* 表格 */
+  .table-wrap { @apply overflow-x-auto; }
+  .table-wrap table { @apply w-full text-sm border-collapse; }
+  .table-wrap th { @apply px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap; }
+  .table-wrap td { @apply px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 text-xs; }
+  .table-wrap tr:last-child td { @apply border-0; }
+  .table-wrap tr:hover td { @apply bg-slate-50 dark:bg-slate-700/30; }
+  .col-name { @apply hidden; }
+  body.has-db .col-name { @apply table-cell; }
+
+  /* DB Bar */
+  .db-bar { @apply flex items-center gap-2.5 flex-wrap mb-4 px-4 py-2.5 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-800/50 transition-all; }
+  .db-bar.ok  { @apply border-solid border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20; }
+  .db-bar.err { @apply border-solid border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20; }
+  .db-bar.loading { @apply border-amber-400 bg-amber-50 dark:bg-amber-900/20; }
+  .db-pill { @apply text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap; }
+  .db-pill.ok      { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400; }
+  .db-pill.none    { @apply bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400; }
+  .db-pill.err     { @apply bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400; }
+  .db-pill.loading { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400; }
+  .db-file-btn {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium cursor-pointer
+           border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800
+           text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors;
+  }
+  .db-clear {
+    @apply hidden items-center gap-1 px-2.5 py-0.5 rounded-full text-xs cursor-pointer
+           border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30
+           text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors;
+  }
+  .db-bar.ok .db-clear { @apply flex; }
+  .db-bar.ok .db-file-btn { @apply hidden; }
+  .table-sel-wrap { @apply hidden items-center gap-2 pl-3 border-l border-emerald-300 dark:border-emerald-700; }
+  .db-bar.ok .table-sel-wrap { @apply flex; }
+
+  /* Buttons */
+  .btn { @apply inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-medium cursor-pointer border transition-all hover:-translate-y-px; }
+  .btn-primary { @apply bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/30 hover:bg-blue-700; }
+  .btn-ghost   { @apply bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700; }
+  .btn-green   { @apply bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/30 hover:bg-emerald-700; }
+
+  /* mono */
+  .mono { @apply font-mono; }
+
+  /* 事件日志面板 */
+  .log-panel { @apply p-3 space-y-1; }
+  .ev-item {
+    @apply flex items-start gap-2 text-xs px-3 py-1.5 rounded-lg;
+  }
+  .ev-total  { @apply bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300; }
+  .ev-clock  { @apply bg-purple-50 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300; }
+  .ev-init   { @apply bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300; }
+  .ev-energy { @apply bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300; }
+  .ev-test   { @apply bg-lime-50 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300; }
+  .ev-reset  { @apply bg-orange-50 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300; }
+  .ev-unknown{ @apply bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400; }
+  .ev-icon { @apply text-base; }
+  .pn-neg { @apply ml-1 text-red-500 font-bold; }
+
+  /* 故障卡片 */
+  .fault-card { @apply border border-red-200 dark:border-red-800 rounded-lg overflow-hidden mb-2; }
+  .fault-head { @apply flex items-center justify-between px-3 py-2 bg-red-50 dark:bg-red-900/30 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors; }
+  .fault-title { @apply text-xs font-semibold text-red-800 dark:text-red-300; }
+  .fault-chev { @apply text-red-400; }
+  .fault-body { @apply overflow-hidden transition-all duration-200 max-h-[2000px]; }
+  .fault-inner { @apply p-3 font-mono text-xs whitespace-pre text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900; }
+  .fault-card.collapsed .fault-body { max-height: 0 !important; opacity: 0.05; }
+
+  /* 遥控操作色 */
+  .op-cancel  { @apply text-red-500; }
+  .op-select  { @apply text-amber-600; }
+  .op-exec    { @apply text-blue-600; }
+  .op-confirm { @apply text-emerald-600; }
+  .result-ok  { @apply text-emerald-600 font-semibold; }
+  .result-fail{ @apply text-red-500 font-semibold; }
+
+  /* QDS */
+  .qds-bad { @apply text-red-500; }
+
+  /* 类型标签 */
+  .type-tag { @apply inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded; }
+
+  /* Log文件解析专用 */
+  .debug-line { @apply text-xs font-mono text-slate-400 dark:text-slate-500 px-2 py-0.5 hover:bg-slate-50 dark:hover:bg-slate-800; }
+  .hex-block { @apply border border-slate-200 dark:border-slate-700 rounded-xl mb-2 overflow-hidden; }
+  .hex-block.collapsed .hex-body { max-height: 0 !important; overflow: hidden; }
+  .hex-header { @apply flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex-wrap; }
+  .hex-raw { @apply flex-1 font-mono text-xs text-slate-500 dark:text-slate-400 truncate; }
+  .frame-summary { @apply text-xs text-blue-600 dark:text-blue-400 font-medium; }
+  .hex-chevron { @apply text-slate-400 ml-auto flex-shrink-0 transition-transform duration-200; }
+  .hex-block.collapsed .hex-chevron { @apply -rotate-90; }
+  .hex-body { @apply transition-all duration-200 max-h-[2000px]; }
+  .frames-wrap { @apply p-2 space-y-2; }
+  .frame-card { @apply border border-slate-100 dark:border-slate-700 rounded-lg overflow-hidden; }
+  .frame-card.collapsed .frame-card-body { max-height: 0 !important; opacity: 0.05; overflow: hidden; }
+  .frame-card-head { @apply flex items-center justify-between px-3 py-1.5 bg-slate-50 dark:bg-slate-900/50 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs; }
+  .frame-card-body { @apply transition-all duration-200 max-h-[2000px]; }
+  .hex-block.collapsed .hex-body { max-height: 0 !important; opacity: 0.05; overflow: hidden; }
+  .frame-table-wrap { @apply overflow-x-auto; }
+  .frame-table-wrap table { @apply w-full text-xs border-collapse; }
+  .frame-table-wrap th { @apply px-2 py-1 text-left text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap; }
+  .frame-table-wrap td { @apply px-2 py-1 border-b border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-300; }
+  .frame-table-wrap tr:last-child td { @apply border-0; }
+  .frame-error { @apply text-xs text-red-500 px-3 py-2; }
+  .frame-json { @apply text-xs font-mono p-2 text-slate-500 dark:text-slate-400 whitespace-pre-wrap; }
+  .link-frame { @apply text-xs font-mono p-2 text-slate-600 dark:text-slate-400; }
+  .frame-block-header { @apply text-xs font-semibold text-slate-500 dark:text-slate-400 px-2 py-1 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700; }
+  .frame-count { @apply text-slate-400 text-xs font-normal ml-1; }
+  .empty-frame-hint { @apply text-xs text-slate-400 p-2 text-center; }
+  .dir-tx { @apply inline-block text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded mr-1; }
+  .dir-rx { @apply inline-block text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-1.5 py-0.5 rounded mr-1; }
+  .time-hl { @apply text-amber-600 dark:text-amber-400; }
+  .stats-bar { @apply hidden flex-wrap gap-2 mb-3; }
+  .stats-bar.visible { @apply flex; }
+  .stat-pill { @apply text-xs px-2.5 py-0.5 rounded-full font-medium; }
+  .stat-pill.lines   { @apply bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300; }
+  .stat-pill.proto104{ @apply bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300; }
+  .stat-pill.proto101{ @apply bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300; }
+  .stat-pill.yc      { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300; }
+  .stat-pill.yx      { @apply bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300; }
+  .stat-pill.ctrl    { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300; }
+  .stat-pill.fault   { @apply bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300; }
+  .stat-pill.energy  { @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300; }
+  .type-tag-yc     { @apply inline-block text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-1.5 py-0.5 rounded; }
+  .type-tag-yx     { @apply inline-block text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-1.5 py-0.5 rounded; }
+  .type-tag-ctrl   { @apply inline-block text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 px-1.5 py-0.5 rounded; }
+  .type-tag-fault  { @apply inline-block text-xs bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-1.5 py-0.5 rounded; }
+  .type-tag-energy { @apply inline-block text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300 px-1.5 py-0.5 rounded; }
+  .type-tag-clock  { @apply inline-block text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300 px-1.5 py-0.5 rounded; }
+  .type-tag-total  { @apply inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded; }
+  .type-tag-link   { @apply inline-block text-xs bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded; }
+  .type-tag-test   { @apply inline-block text-xs bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300 px-1.5 py-0.5 rounded; }
+  .type-tag-other  { @apply inline-block text-xs bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 px-1.5 py-0.5 rounded; }
+
+  /* toggle开关 */
+  .toggle-switch { @apply relative inline-block w-10 h-5 cursor-pointer; }
+  .toggle-switch input { @apply sr-only; }
+  .toggle-track { @apply absolute inset-0 bg-slate-300 dark:bg-slate-600 rounded-full transition-colors duration-200; }
+  .toggle-switch input:checked ~ .toggle-track { @apply bg-blue-500; }
+  .toggle-thumb { @apply absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200; }
+  .toggle-switch input:checked ~ .toggle-thumb { @apply translate-x-5; }
+
+  /* 日志拖放区 */
+  .log-drop-zone {
+    @apply flex-1 min-w-[260px] border-2 border-dashed border-slate-300 dark:border-slate-600
+           rounded-xl p-4 text-center cursor-pointer transition-all
+           bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/30;
+  }
+  .log-drop-zone.drag { @apply border-blue-400 bg-blue-50 dark:bg-blue-900/20; }
+  .log-drop-zone.has-file { @apply border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20; }
+
+  /* error-box */
+  .error-box { @apply hidden bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-4 font-mono text-sm border border-red-200 dark:border-red-800; }
+  .error-box.show { @apply block; }
+  .placeholder { @apply text-center text-slate-400 dark:text-slate-600 py-3 text-xs; }
+  .log-empty { @apply text-slate-400 dark:text-slate-600 text-xs; }
+  .empty-hint { @apply text-center text-slate-400 dark:text-slate-500 py-8 text-sm; }
+}
