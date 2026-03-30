@@ -5,7 +5,7 @@
 ### 修复
 
 - **`CollapseSection` 折叠动画期间 `mb-0` 提前生效**：将 `collapsed = true` 从 `requestAnimationFrame` 回调移至 `transitionend` 事件，确保折叠 CSS 类在动画结束后才切换，避免底部间距在动画中途突变。`toggle()` 和 `close()` 均已修正。
-- **遥测/遥信/电能量/遥控区块间距偏大**：`HexParser` 结果 grid 容器同时存在 `gap-4`（1rem）和子元素 `.cs` 的 `mb-4`（1rem），导致间距约 2rem，移除 `gap-4` 后恢复与页面其他区块一致的 1rem 间距。
+- **遥测/遥信/电能量/遥控区块间距偏大**：`HexParser` 结果 grid 容器的 `gap-4`（1rem）与子元素 `.cs` 的 `mb-4`（1rem）叠加，导致间距约 2rem；移除 `style.css` 中 `.cs` 的 `mb-4` 及 `.cs.collapsed` 的 `mb-0`，统一由 grid `gap-4` 控制间距，两条独立区块（101链路层帧、其他事件）保留 `mt-4` 不变。
 - **`upload.ts` 打包排除项补全**：新增排除 `old/**`、`dist/**`、`.yarn/**`、`*.log`，避免上传无关文件。
 
 ---

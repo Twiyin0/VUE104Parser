@@ -19,8 +19,7 @@
   .pname-none { @apply text-gray-300 dark:text-gray-600 text-xs; }
 
   /* 折叠区块 */
-  .cs { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 overflow-hidden; }
-  .cs.collapsed { @apply mb-0; }
+  .cs { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden; }
   .cs-head {
     @apply flex items-center justify-between px-4 py-3 cursor-pointer select-none
            bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors;
