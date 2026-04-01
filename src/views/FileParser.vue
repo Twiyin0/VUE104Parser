@@ -427,7 +427,7 @@ function downloadLog() {
 
 <template>
   <div class="min-h-screen bg-slate-100 dark:bg-slate-900 p-5 flex justify-center transition-colors">
-    <div class="w-full max-w-[1700px] bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
+    <div class="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
 
       <!-- Header -->
       <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap mb-1.5">
@@ -500,7 +500,7 @@ function downloadLog() {
           </div>
         </div>
         <textarea v-model="logInput" placeholder="粘贴一小段 log 文本进行解析（可选，优先于文件）"
-          class="flex-1 min-h-[20vh] px-3 py-2 font-mono text-xs border border-slate-300 dark:border-slate-600
+          class="flex-1 min-h-[25vh] px-3 py-2 font-mono text-xs border border-slate-300 dark:border-slate-600
                  rounded-lg bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 resize-y
                  focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>

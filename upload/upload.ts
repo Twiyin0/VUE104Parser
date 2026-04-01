@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const config = {
   localDir:        path.resolve(__dirname, '..'),
   archiveFileName: 'project.tar.gz',
-  remoteDir:       '/opt/node/104Parser',
+  remoteDir:       process.env.REMOTE_DIR ?? '/opt/node/104Parser',
   host:            process.env.SSH_HOST     ?? 'host',
   port:            parseInt(process.env.SSH_PORT ?? '22', 10),
   username:        process.env.SSH_USER     ?? 'name',

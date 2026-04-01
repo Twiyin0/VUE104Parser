@@ -337,7 +337,7 @@ function renderAll(results: any[]) {
 
 <template>
   <div class="min-h-screen bg-slate-100 dark:bg-slate-900 p-5 flex justify-center transition-colors">
-    <div class="w-full max-w-[1600px] bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
+    <div class="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
 
       <!-- Header -->
       <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap mb-1.5">
@@ -363,7 +363,7 @@ function renderAll(results: any[]) {
 
       <!-- Input -->
       <div class="relative mb-3">
-        <textarea v-model="hexInput" rows="7"
+        <textarea v-model="hexInput" rows="11"
           placeholder="每行一帧，例如：&#10;68 0E 02 00 00 00 64 01 06 00 01 00 00 00 00 14     (104报文)&#10;68 0B 0B 68 53 01 00 64 01 06 00 01 00 00 00 14 16  (101可变帧)&#10;10 49 01 00 4A 16                                   (101固定帧)"
           class="w-full px-3.5 py-3 font-mono text-sm border border-slate-300 dark:border-slate-600
                  rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 resize-y

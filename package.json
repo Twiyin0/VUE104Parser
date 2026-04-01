@@ -1,6 +1,6 @@
 {
   "name": "vue104parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "IEC 60870-5-104 / DL/T634.5101 双协议解析器（Vue3 + TS）",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:vue\"",

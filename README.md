@@ -84,4 +84,5 @@ SSH_PORT=22
 SSH_USER=username
 SSH_PASSWORD=password
 PORT=33104
+REMOTE_DIR=remote server directory
 ```
