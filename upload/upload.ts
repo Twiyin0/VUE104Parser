@@ -16,6 +16,7 @@ const config = {
   username:        process.env.SSH_USER     ?? 'name',
   password:        process.env.SSH_PASSWORD ?? 'password',
   excludes: ['node_modules/**', '.git/**', '*.tar.gz', '.env*', 'upload/**','old/**','dist/**','.yarn/**','*.log'],
+  afterCMD: ['docker exec 732b5bcff51e /bin/bash -c \"cd /app && yarn build\"'],
 }
 
 function createArchive(): Promise<string> {
@@ -36,9 +37,23 @@ function createArchive(): Promise<string> {
   })
 }
 
+function execRemote(conn: Client, cmd: string): Promise<{ stdout: string; stderr: string; code: number }> {
+  return new Promise((resolve, reject) => {
+    conn.exec(cmd, (err, stream) => {
+      if (err) return reject(err)
+      let stdout = '', stderr = ''
+      stream.stdout.on('data', (d: Buffer) => { stdout += d })
+      stream.stderr.on('data', (d: Buffer) => { stderr += d })
+      stream.on('close', (code: number) => resolve({ stdout: stdout.trimEnd(), stderr: stderr.trimEnd(), code }))
+    })
+  })
+}
+
 async function uploadAndExtract(archivePath: string): Promise<void> {
   const remoteArchivePath = `${config.remoteDir}/${config.archiveFileName}`
-  console.log(`\n[2/3] 正在连接 → ${config.username}@${config.host}:${config.port}`)
+  const hasAfter = config.afterCMD.length > 0
+  const total = hasAfter ? 4 : 3
+  console.log(`\n[2/${total}] 正在连接 → ${config.username}@${config.host}:${config.port}`)
 
   const conn = new Client()
   await new Promise<void>((resolve, reject) => {
@@ -64,7 +79,7 @@ async function uploadAndExtract(archivePath: string): Promise<void> {
     })
     console.log('      上传完成')
 
-    console.log(`\n[3/3] 正在解压到 ${config.remoteDir} ...`)
+    console.log(`\n[3/${total}] 正在解压到 ${config.remoteDir} ...`)
     await new Promise<void>((resolve, reject) => {
       const cmd = `tar -xzf "${remoteArchivePath}" -C "${config.remoteDir}" && rm -f "${remoteArchivePath}"; echo __DONE__`
       conn.exec(cmd, (err, stream) => {
@@ -79,6 +94,21 @@ async function uploadAndExtract(archivePath: string): Promise<void> {
       })
     })
     console.log('      解压完成，远端压缩包已清理')
+
+    if (config.afterCMD.length > 0) {
+      console.log(`\n[4/${total}] 执行后续命令 (共 ${config.afterCMD.length} 条)`)
+      for (let i = 0; i < config.afterCMD.length; i++) {
+        const cmd = config.afterCMD[i]
+        console.log(`\n    [4-${i + 1}] $ ${cmd}`)
+        const result = await execRemote(conn, `cd "${config.remoteDir}" && ${cmd}`)
+        if (result.stdout) console.log(result.stdout)
+        if (result.stderr) console.error(result.stderr)
+        if (result.code !== 0) {
+          throw new Error(`命令 "${cmd}" 执行失败 (exit code ${result.code})`)
+        }
+        console.log(`    [4-${i + 1}] 完成 ✓`)
+      }
+    }
   } finally {
     conn.end()
   }

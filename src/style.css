@@ -158,16 +158,6 @@
   .stat-pill.ctrl    { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300; }
   .stat-pill.fault   { @apply bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300; }
   .stat-pill.energy  { @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300; }
-  .type-tag-yc     { @apply inline-block text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-1.5 py-0.5 rounded; }
-  .type-tag-yx     { @apply inline-block text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-1.5 py-0.5 rounded; }
-  .type-tag-ctrl   { @apply inline-block text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 px-1.5 py-0.5 rounded; }
-  .type-tag-fault  { @apply inline-block text-xs bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-1.5 py-0.5 rounded; }
-  .type-tag-energy { @apply inline-block text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300 px-1.5 py-0.5 rounded; }
-  .type-tag-clock  { @apply inline-block text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300 px-1.5 py-0.5 rounded; }
-  .type-tag-total  { @apply inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded; }
-  .type-tag-link   { @apply inline-block text-xs bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded; }
-  .type-tag-test   { @apply inline-block text-xs bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300 px-1.5 py-0.5 rounded; }
-  .type-tag-other  { @apply inline-block text-xs bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 px-1.5 py-0.5 rounded; }
 
   /* toggle开关 */
   .toggle-switch { @apply relative inline-block w-10 h-5 cursor-pointer; }
@@ -193,3 +183,32 @@
   .log-empty { @apply text-slate-400 dark:text-slate-600 text-xs; }
   .empty-hint { @apply text-center text-slate-400 dark:text-slate-500 py-8 text-sm; }
 }
+
+/* type-tag 原生CSS，避免@layer components purge问题 */
+[class^="type-tag-"] {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+.type-tag-yc     { background: #f3e8ff; color: #7e22ce; }
+.type-tag-yx     { background: #dcfce7; color: #15803d; }
+.type-tag-ctrl   { background: #fef3c7; color: #b45309; }
+.type-tag-fault  { background: #fee2e2; color: #b91c1c; }
+.type-tag-energy { background: #fef9c3; color: #a16207; }
+.type-tag-clock  { background: #ede9fe; color: #6d28d9; }
+.type-tag-total  { background: #dbeafe; color: #1d4ed8; }
+.type-tag-link   { background: #f1f5f9; color: #475569; }
+.type-tag-test   { background: #ecfccb; color: #4d7c0f; }
+.type-tag-other  { background: #f1f5f9; color: #475569; }
+
+.dark .type-tag-yc     { background: rgba(88,28,135,0.3); color: #d8b4fe; }
+.dark .type-tag-yx     { background: rgba(20,83,45,0.3);  color: #86efac; }
+.dark .type-tag-ctrl   { background: rgba(120,53,15,0.3); color: #fcd34d; }
+.dark .type-tag-fault  { background: rgba(127,29,29,0.3); color: #fca5a5; }
+.dark .type-tag-energy { background: rgba(113,63,18,0.3); color: #fde047; }
+.dark .type-tag-clock  { background: rgba(76,29,149,0.3); color: #c4b5fd; }
+.dark .type-tag-total  { background: rgba(30,58,138,0.3); color: #93c5fd; }
+.dark .type-tag-link   { background: #334155; color: #cbd5e1; }
+.dark .type-tag-test   { background: rgba(54,83,20,0.3);  color: #bef264; }
+.dark .type-tag-other  { background: #334155; color: #f1f5f9; }
