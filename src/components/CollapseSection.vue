@@ -10,12 +10,21 @@ const props = defineProps<{
   startOpen?: boolean
 }>()
 
+const emit = defineEmits<{
+  (e: 'update:open', value: boolean): void
+}>()
+
 const collapsed = ref(!props.startOpen)
 const bodyRef   = ref<HTMLElement>()
+
+function notify(open: boolean) {
+  emit('update:open', open)
+}
 
 function toggle() {
   if (collapsed.value) {
     collapsed.value = false
+    notify(true)
     nextTick(() => {
       if (bodyRef.value) bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
     })
@@ -27,6 +36,7 @@ function toggle() {
       })
       bodyRef.value.addEventListener('transitionend', () => {
         collapsed.value = true
+        notify(false)
       }, { once: true })
     }
   }
@@ -34,6 +44,7 @@ function toggle() {
 
 function open() {
   collapsed.value = false
+  notify(true)
   nextTick(() => {
     if (bodyRef.value) bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
   })
@@ -47,6 +58,7 @@ function close() {
     })
     bodyRef.value.addEventListener('transitionend', () => {
       collapsed.value = true
+      notify(false)
     }, { once: true })
   }
 }

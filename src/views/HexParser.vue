@@ -30,6 +30,17 @@ const link101Rows = ref('')
 const eventLog    = ref('<span class="log-empty">等待解析…</span>')
 
 const counts = ref({ yc: 0, yx: 0, energy: 0, ctrl: 0, param: 0, link101: 0, events: 0 })
+const sectionOpen = ref({ yc: false, yx: false, energy: false, ctrl: false, param: false, link101: false, events: false })
+
+function syncSectionsWithData() {
+  if (counts.value.yc > 0 && !sectionOpen.value.yc) secYc.value?.open()
+  if (counts.value.yx > 0 && !sectionOpen.value.yx) secYx.value?.open()
+  if (counts.value.energy > 0 && !sectionOpen.value.energy) secEnergy.value?.open()
+  if (counts.value.ctrl > 0 && !sectionOpen.value.ctrl) secCtrl.value?.open()
+  if (counts.value.param > 0 && !sectionOpen.value.param) secParam.value?.open()
+  if (counts.value.link101 > 0 && !sectionOpen.value.link101) secLink.value?.open()
+  if (counts.value.events > 0 && !sectionOpen.value.events) secEvents.value?.open()
+}
 
 async function parse() {
   const lines = hexInput.value.split('\n').map(l => l.trim()).filter(Boolean)
@@ -276,22 +287,56 @@ function renderAll(results: any[]) {
         </div>`); break
 
       case 'file_service': {
-        const svcIcon: Record<string, string> = { F_AF_NA:'📢',F_SC_NA:'📥',F_DR_TA:'📂',F_FR_NA:'✅',F_SR_NA:'📑',F_SG_NA:'📦',F_LS_NA:'🏁' }
+        const svcIcon: Record<string, string> = { F_AF_NA:'📢',F_SC_NA:'📥',F_DR_TA:'📂',F_FR_NA:'✅',F_SR_NA:'📑',F_SG_NA:'📦',F_LS_NA:'🏁', F_FR_NA_1:'🗂️' }
         const icon = frame.desc?.includes('确认') ? '🤝' : (svcIcon[frame.service] ?? '📁')
         const lines: string[] = []
+        if (frame.packetTypeName) lines.push(`附加包类型: ${esc(frame.packetTypeName)} (${frame.packetType})`)
+        if (frame.infoObjAddr != null) lines.push(`信息体地址(IOA): ${esc(frame.infoObjAddr)}`)
+        if (frame.opName) lines.push(`操作类型: ${esc(frame.opName)} (OP=${frame.op})`)
+        if (frame.directoryId != null) lines.push(`目录ID: ${esc(frame.directoryId)}`)
+        if (frame.directoryName !== undefined) lines.push(`目录名: ${esc(frame.directoryName || '默认目录')}`)
+        if (frame.queryFlagName) lines.push(`召唤标志: ${esc(frame.queryFlagName)}`)
+        if (frame.startTime) lines.push(`查询起始时间: ${esc(frame.startTime)}`)
+        if (frame.endTime) lines.push(`查询终止时间: ${esc(frame.endTime)}`)
+        if (frame.resultDesc) lines.push(`结果: ${esc(frame.resultDesc)}`)
+        if (frame.hasMoreDesc) lines.push(`后续标志: ${esc(frame.hasMoreDesc)}`)
+        if (frame.fileCount != null) lines.push(`文件数量: ${esc(frame.fileCount)}`)
+        if (frame.fileName) lines.push(`文件名: ${esc(frame.fileName)}`)
+        if (frame.fileId != null) lines.push(`文件ID: ${esc(frame.fileId)}`)
+        if (frame.fileSize != null) lines.push(`文件大小: ${esc(frame.fileSize)} 字节`)
+        if (frame.segmentNo != null) lines.push(`数据段号: ${esc(frame.segmentNo)}`)
         if (frame.nof != null) lines.push(`文件类型: ${esc(frame.nofName)} (NOF=${frame.nof})`)
         if (frame.nos != null) lines.push(`节: ${esc(frame.nosName)} (NOS=${frame.nos})`)
         if (frame.lof != null) lines.push(`文件长度: ${frame.lof} 字节`)
         if (frame.los != null) lines.push(`节长度: ${frame.los} 字节`)
         if (frame.scqDesc) lines.push(`操作类型: ${esc(frame.scqDesc)}`)
-        if (frame.result)  lines.push(`准备状态: ${esc(frame.result)}`)
+        if (frame.result) lines.push(`准备状态: ${esc(frame.result)}`)
         if (frame.lsqDesc) lines.push(`结束标志: ${esc(frame.lsqDesc)}`)
-        if (frame.chsHex)  lines.push(`校验和: ${esc(frame.chsHex)}`)
+        if (frame.chsHex) lines.push(`校验和: ${esc(frame.chsHex)}`)
+        if (frame.checksumHex) lines.push(`报文校验码: ${esc(frame.checksumHex)}`)
+        if (frame.checksumCalcHex) lines.push(`计算校验码: ${esc(frame.checksumCalcHex)}${frame.checksumValid != null ? ` (${frame.checksumValid ? '正确' : '错误'})` : ''}`)
         if (frame.ackType) lines.push(`确认类型: ${esc(frame.ackType)}`)
-        if (frame.dataLen != null) { lines.push(`段数据长度: ${frame.dataLen} 字节`); if (frame.dataHex) lines.push(`数据(HEX):\n${esc(frame.dataHex)}`) }
-        if (frame.files?.length) { lines.push(`\n文件列表 (${frame.files.length} 个):`); frame.files.forEach((f: any, i: number) => { const cat = f.fileCategory && f.fileCategory !== f.name ? ` [${esc(f.fileCategory)}]` : ''; lines.push(`  ${i+1}. ${esc(f.name)}${cat}  查询:${esc(f.fileTypeName)}  时间:${esc(f.startTime)} ~ ${esc(f.endTime)}`) }) }
+        if (frame.dataLen != null) {
+          lines.push(`段数据长度: ${frame.dataLen} 字节`)
+          if (frame.dataHex) lines.push(`数据(HEX):\n${esc(frame.dataHex)}`)
+        }
+        if (frame.files?.length) {
+          lines.push(`\n文件列表 (${frame.files.length} 个):`)
+          frame.files.forEach((f: any, i: number) => {
+            const cat = f.fileCategory && f.fileCategory !== f.name ? ` [${esc(f.fileCategory)}]` : ''
+            lines.push(`  ${i + 1}. ${esc(f.name)}${cat}  查询:${esc(f.fileTypeName)}  时间:${esc(f.startTime)} ~ ${esc(f.endTime)}`)
+          })
+        }
         if (frame.subTypeName) lines.push(`查询类型: ${esc(frame.subTypeName)}`)
-        if (frame.entries?.length) { lines.push(`\n目录 (${frame.entries.length} 个文件):`); frame.entries.forEach((e: any, i: number) => lines.push(`  ${i+1}. ${esc(e.nofName)} 大小:${e.lof}字节  修改:${esc(e.lastModified)}  状态:${esc(e.status)}`)) }
+        if (frame.entries?.length) {
+          const title = frame.op === 2 ? `\n目录文件列表 (${frame.entries.length} 个):` : `\n目录 (${frame.entries.length} 个文件):`
+          lines.push(title)
+          frame.entries.forEach((e: any, i: number) => {
+            if (frame.op === 2) lines.push(`  ${i + 1}. ${esc(e.fileName)}  属性:${esc(e.fileAttr)}  大小:${esc(e.fileSize)}字节  时间:${esc(e.fileTime)}`)
+            else lines.push(`  ${i + 1}. ${esc(e.nofName)} 大小:${e.lof}字节  修改:${esc(e.lastModified)}  状态:${esc(e.status)}`)
+          })
+        }
+        if (frame.rawHex) lines.push(`原始附加包(HEX):\n${esc(frame.rawHex)}`)
         lines.push(`公共地址: ${frame.addr}  COT: ${esc(frame.cotDesc ?? frame.cot)}`)
         const faultId = `fault-${Math.random().toString(36).slice(2, 8)}`
         _ev.push(`<div class="fault-card" id="${faultId}"><div class="fault-head" onclick="toggleBlock('${faultId}')"><span class="fault-title text-cyan-300">${pb}${icon} ${esc(frame.service ?? 'FILE')} &nbsp; ${esc(frame.desc)}</span><span class="fault-chev">▾</span></div><div class="fault-body"><div class="fault-inner text-cyan-200">${lines.join('\n')}</div></div></div>`)
@@ -325,13 +370,7 @@ function renderAll(results: any[]) {
   eventLog.value    = _ev.length ? _ev.join('') : '<span class="log-empty">✨ 无其他事件</span>'
 
   counts.value = { yc: _yc.length, yx: _yx.length, energy: _energy.length, ctrl: _ctrl.length, param: _param.length, link101: _link101.length, events: _ev.length }
-
-  const secs: [any, number][] = [
-    [secYc, counts.value.yc], [secYx, counts.value.yx], [secEnergy, counts.value.energy],
-    [secCtrl, counts.value.ctrl], [secParam, counts.value.param],
-    [secLink, counts.value.link101], [secEvents, counts.value.events]
-  ]
-  secs.forEach(([s, c]) => c > 0 ? s.value?.open() : s.value?.close())
+  syncSectionsWithData()
 }
 </script>
 
@@ -385,7 +424,7 @@ function renderAll(results: any[]) {
       <!-- Results grid -->
       <div class="grid grid-cols-1 gap-4">
 
-        <CollapseSection ref="secYc" icon="📊" title="遥测" subtitle="YC · TI=9/11/13" :count="counts.yc">
+        <CollapseSection ref="secYc" icon="📊" title="遥测" subtitle="YC · TI=9/11/13" :count="counts.yc" @update:open="sectionOpen.yc = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -395,7 +434,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secYx" icon="🚦" title="遥信 / SOE" subtitle="YX · TI=1/3/30/31" :count="counts.yx">
+        <CollapseSection ref="secYx" icon="🚦" title="遥信 / SOE" subtitle="YX · TI=1/3/30/31" :count="counts.yx" @update:open="sectionOpen.yx = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -405,7 +444,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secEnergy" icon="⚡" title="电能量" subtitle="TI=206/207" :count="counts.energy">
+        <CollapseSection ref="secEnergy" icon="⚡" title="电能量" subtitle="TI=206/207" :count="counts.energy" @update:open="sectionOpen.energy = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -415,7 +454,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secCtrl" icon="🎮" title="遥控" subtitle="Control · TI=45/46" :count="counts.ctrl">
+        <CollapseSection ref="secCtrl" icon="🎮" title="遥控" subtitle="Control · TI=45/46" :count="counts.ctrl" @update:open="sectionOpen.ctrl = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(hex)</th>
@@ -425,7 +464,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secParam" icon="⚙️" title="定值读写" subtitle="Parameter · TI=200~203" :count="counts.param">
+        <CollapseSection ref="secParam" icon="⚙️" title="定值读写" subtitle="Parameter · TI=200~203" :count="counts.param" @update:open="sectionOpen.param = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>协议</th><th>操作</th><th>定值区SN</th><th>地址(hex)</th>
@@ -438,7 +477,7 @@ function renderAll(results: any[]) {
       </div>
 
       <!-- 101链路层 -->
-      <CollapseSection ref="secLink" icon="🔗" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-4">
+      <CollapseSection ref="secLink" icon="🔗" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-4" @update:open="sectionOpen.link101 = $event">
         <div class="table-wrap">
           <table><thead><tr>
             <th>链路地址</th><th>帧类型</th><th>方向/PRM</th><th>FC功能码</th>
@@ -449,7 +488,7 @@ function renderAll(results: any[]) {
       </CollapseSection>
 
       <!-- 其他事件 -->
-      <CollapseSection ref="secEvents" icon="📋" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events" class="mt-4">
+      <CollapseSection ref="secEvents" icon="📋" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events" class="mt-4" @update:open="sectionOpen.events = $event">
         <div class="log-panel" v-html="eventLog" />
       </CollapseSection>
 
