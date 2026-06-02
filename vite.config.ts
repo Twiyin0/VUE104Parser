@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
+      '/api': 'http://localhost:33104',
       '/parse': 'http://localhost:33104',
       '/parseLog': 'http://localhost:33104',
     }

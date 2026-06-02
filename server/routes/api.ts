@@ -80,8 +80,8 @@ function parseSingle(hexStr: string, forceProtocol?: '104' | '101') {
 function authMiddleware(req: Request, res: Response, next: Function) {
   if (!config.auth.enabled) return next()
 
-  // /api/v1/info 和 /api/v1/types 不需要认证
-  if (req.path === '/info' || req.path === '/types') return next()
+  // /api/v1/info、/api/v1/types、/api/v1/config 不需要认证
+  if (req.path === '/info' || req.path === '/types' || req.path === '/config') return next()
 
   const apiKey = req.headers['x-api-key'] as string
     ?? (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : undefined)
@@ -118,6 +118,12 @@ router.get('/info', (_req, res) => {
 
 router.get('/types', (_req, res) => {
   res.json({ types: SUPPORTED_TYPES })
+})
+
+// ── GET /api/v1/config ────────────────────────────────────────
+
+router.get('/config', (_req, res) => {
+  res.json({ site: config.site })
 })
 
 // ── POST /api/v1/detect ───────────────────────────────────────

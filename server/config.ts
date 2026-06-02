@@ -5,16 +5,26 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+export interface SiteConfig {
+  copyright: string
+  icp: string
+  icp_url: string
+  police: string
+  police_url: string
+}
+
 export interface AppConfig {
   server: { port: number }
   cors: { enabled: boolean; origins: string | string[] }
   auth: { enabled: boolean; keys: string[] }
+  site: SiteConfig
 }
 
 const defaults: AppConfig = {
   server: { port: 33104 },
   cors: { enabled: true, origins: '*' },
   auth: { enabled: false, keys: [] },
+  site: { copyright: '© 2025 VUE104Parser', icp: '', icp_url: 'https://beian.miit.gov.cn/', police: '', police_url: 'https://www.beian.gov.cn/' },
 }
 
 function deepMerge(target: any, source: any): any {
