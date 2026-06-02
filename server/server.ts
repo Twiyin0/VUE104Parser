@@ -2,6 +2,8 @@ import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { detectProtocol } from './protocolDetector.js'
+import { config } from './config.js'
+import apiRouter from './routes/api.js'
 
 // CommonJS parser classes (keep as-is, no logic change)
 import { createRequire } from 'module'
@@ -13,8 +15,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app       = express()
 app.use(express.json({ limit: '10mb' }))
 
+// ── CORS 中间件 ──────────────────────────────────────────────
+if (config.cors.enabled) {
+  app.use((_req, res, next) => {
+    const origins = config.cors.origins
+    const origin  = Array.isArray(origins) ? origins.join(', ') : origins
+    res.header('Access-Control-Allow-Origin', origin)
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    res.header('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization')
+    if (_req.method === 'OPTIONS') return res.sendStatus(204)
+    next()
+  })
+}
+
 // Serve built Vue frontend
 app.use(express.static(path.join(__dirname, '../dist/public')))
+
+// ── API v1 路由 ──────────────────────────────────────────────
+app.use('/api/v1', apiRouter)
 
 const parser104 = new Parser104()
 const parser101 = new Parser101()
@@ -87,5 +105,9 @@ app.post('/parseLog', express.json({ limit: '100mb' }), (req, res) => {
   res.json({ lines: result })
 })
 
-const PORT = parseInt(process.env.PORT ?? '33104', 10)
-app.listen(PORT, () => console.log(`104/101 双协议解析器运行在 http://localhost:${PORT}`))
+const PORT = parseInt(process.env.PORT ?? String(config.server.port), 10)
+app.listen(PORT, () => {
+  console.log(`104/101 双协议解析器运行在 http://localhost:${PORT}`)
+  console.log(`API v1 端点: http://localhost:${PORT}/api/v1/info`)
+  if (config.auth.enabled) console.log('API Key 认证已启用')
+})
