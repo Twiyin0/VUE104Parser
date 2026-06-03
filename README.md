@@ -30,7 +30,8 @@ VUE104Parser/
 │   ├── components/
 │   │   ├── ThemeToggle.vue       # 主题切换按钮组件（两页共用）
 │   │   ├── DbBar.vue             # 点表数据库上传栏（两页共用）
-│   │   └── CollapseSection.vue   # 可折叠区块（HexParser 用）
+│   │   ├── CollapseSection.vue   # 可折叠区块（HexParser 用）
+│   │   └── ScrollToTop.vue       # 回到顶部按钮（两页共用）
 │   │
 │   └── views/
 │       ├── HexParser.vue         # 原 index.html → 路由 /
@@ -79,10 +80,19 @@ auth:
   enabled: false
   keys:
     - "your-secret-key-here"
+
+# 站点信息（显示在页面底部 footer）
+site:
+  copyright: "© 2025 VUE104Parser"
+  icp: ""                # ICP 备案号，如 "京ICP备XXXXXXXX号"
+  icp_url: "https://beian.miit.gov.cn/"
+  police: ""             # 公安备案号，如 "京公网安备XXXXXXXXXX号"
+  police_url: "https://www.beian.gov.cn/"
 ```
 
 - `auth.enabled: true` 时，API 请求需携带 `X-API-Key` 或 `Authorization: Bearer <key>` 头
-- `GET /api/v1/info` 和 `GET /api/v1/types` 始终免认证
+- `GET /api/v1/info`、`GET /api/v1/types`、`GET /api/v1/config` 始终免认证
+- `site.icp` 和 `site.police` 填入后页面底部 footer 自动显示备案链接
 
 ## REST API
 
@@ -93,6 +103,7 @@ auth:
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/v1/info` | API 信息、版本、端点列表 |
+| GET | `/api/v1/config` | 站点配置（footer 备案信息） |
 | GET | `/api/v1/types` | 支持的 24 种帧类型（TI） |
 | POST | `/api/v1/parse` | 自动识别协议解析 hex 报文 |
 | POST | `/api/v1/parse/104` | 强制按 IEC 104 解析 |

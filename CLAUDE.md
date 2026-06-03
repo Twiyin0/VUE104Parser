@@ -28,16 +28,32 @@ yarn start        # run production
 
 - `server/server.ts` — main Express entry, CORS middleware, mounts API router
 - `server/routes/api.ts` — REST API v1 endpoints (`/api/v1/*`)
-- `server/config.ts` — reads `config.yml`
+- `server/config.ts` — reads `config.yml`, exports `AppConfig` type
 - `server/protocolDetector.ts` — auto-detect 104 vs 101 from hex
+- `config.yml` — server port, CORS, API Key auth, site footer info (ICP/police)
 - `src_parsers/104ParserClass.js` — IEC 104 parser (CommonJS)
 - `src_parsers/101ParserClass.js` — IEC 101 parser (CommonJS)
+- `src/components/ScrollToTop.vue` — back-to-top button (shared)
+- `src/App.vue` — root layout with footer (reads site config from API)
 
 ## API
 
 REST API at `/api/v1/`. See README.md for full endpoint list and examples.
 
 Auth: `config.yml` → `auth.enabled: true` requires `X-API-Key` or `Authorization: Bearer <key>` header.
+
+Public endpoints (no auth): `/api/v1/info`, `/api/v1/types`, `/api/v1/config`
+
+## config.yml
+
+- `server.port` — listen port (default 33104)
+- `cors.enabled` / `cors.origins` — CORS settings
+- `auth.enabled` / `auth.keys` — API Key authentication
+- `site.copyright` / `site.icp` / `site.police` — footer display info, fetched by frontend via `GET /api/v1/config`
+
+## Vite Proxy
+
+`vite.config.ts` proxies `/api`, `/parse`, `/parseLog` to Express (localhost:33104). Add new API paths there.
 
 ## Conventions
 
