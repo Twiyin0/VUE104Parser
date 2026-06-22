@@ -8,3 +8,6 @@ yarn.lock
 package-lock.json
 .yarn
 old
+data/log/
+data/plugins.json
+/data

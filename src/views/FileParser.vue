@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ThemeToggle from '../components/ThemeToggle.vue'
 import DbBar from '../components/DbBar.vue'
+import PageHero from '../components/PageHero.vue'
 import { useDbStore } from '../stores/db'
 import { esc, addrHex, protoBadge, dirBadge, typeTag, highlightTime } from '../composables/useHtmlUtils'
 
@@ -502,25 +502,26 @@ function downloadLog() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 dark:bg-slate-900 p-5 flex justify-center transition-colors">
-    <div class="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
+  <div class="page-view">
+    <div class="page-surface">
 
-      <!-- Header -->
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap mb-1.5">
-        📄 Log 文件解析器
-        <span class="text-xs font-normal bg-blue-600 text-white px-3 py-0.5 rounded-full">104</span>
-        <span class="text-xs font-normal bg-cyan-600 text-white px-3 py-0.5 rounded-full">101</span>
-        <span class="text-xs font-normal bg-violet-600 text-white px-3 py-0.5 rounded-full">LOG</span>
-        <ThemeToggle />
-        <router-link to="/"
-          class="ml-2 text-sm text-blue-600 dark:text-blue-400 border border-slate-300 dark:border-slate-600 px-3.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-          ← 返回实时解析
-        </router-link>
-      </h1>
-      <div class="mb-4 pl-3 border-l-4 border-violet-500 bg-slate-50 dark:bg-slate-700/50 py-2 text-sm text-slate-600 dark:text-slate-300 rounded-r-lg leading-relaxed">
-        上传 log 文件后自动逐行解析，保留原始调试信息，识别 <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded text-xs">Tx/Rx</code> 帧并解析 101/104 协议内容。
-        可加载点表 db 文件查看点名。支持网页展示或下载解析后的 log 文件。
-      </div>
+      <PageHero
+        icon="📄"
+        title="Log 文件解析器"
+        tone="violet"
+        :badges="[
+          { label: '104', tone: 'blue' },
+          { label: '101', tone: 'cyan' },
+          { label: 'LOG', tone: 'violet' },
+        ]"
+      >
+        <p>
+          上传 log 文件后自动逐行解析，保留原始调试信息，识别 <code>Tx/Rx</code> 帧并解析 101/104 协议内容。
+        </p>
+        <p>
+          可加载点表 db 文件查看点名，支持网页展示和下载解析后的日志结果。
+        </p>
+      </PageHero>
 
       <!-- DB Bar -->
       <DbBar />

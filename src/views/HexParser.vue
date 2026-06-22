@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import ThemeToggle from '../components/ThemeToggle.vue'
 import DbBar from '../components/DbBar.vue'
 import CollapseSection from '../components/CollapseSection.vue'
+import PageHero from '../components/PageHero.vue'
 import { useDbStore } from '../stores/db'
 import { esc, addrHex, protoBadge, nameCell, qdsStr, opClass, ycValueStr } from '../composables/useHtmlUtils'
 
@@ -32,6 +32,8 @@ const eventLog    = ref('<span class="log-empty">等待解析…</span>')
 const counts = ref({ yc: 0, yx: 0, energy: 0, ctrl: 0, param: 0, link101: 0, events: 0 })
 const sectionOpen = ref({ yc: false, yx: false, energy: false, ctrl: false, param: false, link101: false, events: false })
 
+const DEFAULT_TRANSFER_TABLE = '\u5165\u7f51\u68c0'
+
 function refreshAncestorHeights(fromEl: HTMLElement | null) {
   let current = fromEl?.parentElement ?? null
   while (current) {
@@ -40,6 +42,13 @@ function refreshAncestorHeights(fromEl: HTMLElement | null) {
     }
     current = current.parentElement
   }
+}
+
+function scheduleAncestorRefresh(fromEl: HTMLElement | null) {
+  requestAnimationFrame(() => {
+    refreshAncestorHeights(fromEl)
+    requestAnimationFrame(() => refreshAncestorHeights(fromEl))
+  })
 }
 
 function toggleBlockById(id: string) {
@@ -53,7 +62,11 @@ function toggleBlockById(id: string) {
   body.style.maxHeight = collapsed ? '0px' : `${body.scrollHeight}px`
   body.style.opacity = collapsed ? '0.05' : '1'
 
-  requestAnimationFrame(() => refreshAncestorHeights(card))
+  scheduleAncestorRefresh(card)
+  body.addEventListener('transitionend', (event) => {
+    if (event.target !== body) return
+    scheduleAncestorRefresh(card)
+  }, { once: true })
 }
 
 onMounted(() => {
@@ -114,7 +127,39 @@ function clear() {
   ;[secYc, secYx, secEnergy, secCtrl, secParam, secLink, secEvents].forEach(s => s.value?.close())
 }
 
+function applyDefaultDbTable(results: any[]) {
+  if (!db.ok || !db.tableNames.length || db.curTable) return
+
+  const protos: Record<string, number> = {}
+  for (const frame of results) {
+    const proto = String(frame?.protocol ?? '').trim()
+    if (!proto) continue
+    protos[proto] = (protos[proto] ?? 0) + 1
+  }
+
+  let mainProto = ''
+  let maxCount = 0
+  for (const [proto, count] of Object.entries(protos)) {
+    if (count > maxCount) {
+      mainProto = proto
+      maxCount = count
+    }
+  }
+
+  if (!mainProto) return
+
+  const defaultTable = mainProto === '101'
+    ? null
+    : (db.tableNames.includes(DEFAULT_TRANSFER_TABLE) ? DEFAULT_TRANSFER_TABLE : (db.tableNames[0] ?? null))
+
+  if (defaultTable !== db.curTable) {
+    db.rebuildMaps(defaultTable)
+  }
+}
+
 function renderAll(results: any[]) {
+  applyDefaultDbTable(results)
+
   let ycIdx = 1, yxIdx = 1, ctrlIdx = 1, energyIdx = 1
   const _yc: string[] = [], _yx: string[] = [], _ctrl: string[] = []
   const _param: string[] = [], _energy: string[] = [], _link101: string[] = [], _ev: string[] = []
@@ -409,27 +454,27 @@ function renderAll(results: any[]) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 dark:bg-slate-900 p-5 flex justify-center transition-colors">
-    <div class="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-black/10 p-7">
+  <div class="page-view">
+    <div class="page-surface">
 
-      <!-- Header -->
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 flex-wrap mb-1.5">
-        ⚡ 104/101规约解析器
-        <span class="text-xs font-normal bg-blue-600 text-white px-3 py-0.5 rounded-full">104</span>
-        <span class="text-xs font-normal bg-cyan-600 text-white px-3 py-0.5 rounded-full">101</span>
-        <ThemeToggle />
-        <router-link to="/fileParser"
-          class="ml-2 text-sm text-blue-600 dark:text-blue-400 border border-slate-300 dark:border-slate-600 px-3.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-          📄 Log文件解析
-        </router-link>
-      </h1>
-      <div class="mb-4 pl-3 border-l-4 border-blue-500 bg-slate-50 dark:bg-slate-700/50 py-2 text-sm text-slate-600 dark:text-slate-300 rounded-r-lg leading-relaxed">
-        支持 <strong>IEC 60870-5-104</strong> 与 <strong>DL/T634.5101-2002</strong> 双协议同时解析。每行一帧十六进制报文。
-        自动识别协议，也可在行首加 <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded text-xs">[101]</code>
-        或 <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded text-xs">[104]</code> 手动指定。<br>
-        101报文：固定帧 <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded text-xs">10 C A1 A2 CS 16</code>，
-        可变帧 <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded text-xs">68 L L 68 C A1 A2 [ASDU] CS 16</code>。
-      </div>
+      <PageHero
+        icon="⚡"
+        title="104/101规约解析器"
+        tone="blue"
+        :badges="[
+          { label: '104', tone: 'blue' },
+          { label: '101', tone: 'cyan' },
+        ]"
+      >
+        <p>
+          支持 <strong>IEC 60870-5-104</strong> 与 <strong>DL/T634.5101-2002</strong> 双协议同时解析。每行一帧十六进制报文。
+          自动识别协议，也可在行首加 <code>[101]</code> 或 <code>[104]</code> 手动指定。
+        </p>
+        <p>
+          101报文：固定帧 <code>10 C A1 A2 CS 16</code>，
+          可变帧 <code>68 L L 68 C A1 A2 [ASDU] CS 16</code>。
+        </p>
+      </PageHero>
 
       <!-- DB Bar -->
       <DbBar />

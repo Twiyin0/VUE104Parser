@@ -1,137 +1,243 @@
-import { Router, Request, Response } from 'express'
-import { config } from '../config.js'
-import { detectProtocol } from '../protocolDetector.js'
-import { normalizeHexInput, parseHexList, parseLogText } from '../parseService.js'
+import { Request, Response, Router } from 'express'
+import { runtime } from '../runtime'
+import { SUPPORTED_TYPES } from '../core/protocol-types'
+import { localizeParserValue } from '../core/parser-localizer'
 
 const router = Router()
-const API_VERSION = '1.0.1'
-const HEX_REQUIRED_MSG = '需要提供 hex 字符串或数组'
-const LOG_TEXT_REQUIRED_MSG = 'logText 必须为字符串'
+const API_VERSION = '2.0.0'
 
-const PUBLIC_PATHS = new Set(['/info', '/types', '/config'])
-
-const SUPPORTED_TYPES = [
-  { ti: '1', name: 'M_SP_NA_1', desc: '单点遥信', protocol: ['104', '101'] },
-  { ti: '3', name: 'M_DP_NA_1', desc: '双点遥信', protocol: ['104', '101'] },
-  { ti: '5', name: 'M_BO_NA_1', desc: '32比特串', protocol: ['104', '101'] },
-  { ti: '7', name: 'M_BO_TA_1', desc: '带时标32比特串', protocol: ['104', '101'] },
-  { ti: '9', name: 'M_ME_NA_1', desc: '归一化遥测值', protocol: ['104', '101'] },
-  { ti: '11', name: 'M_ME_NB_1', desc: '标度化遥测值', protocol: ['104', '101'] },
-  { ti: '13', name: 'M_ME_NC_1', desc: '短浮点遥测值', protocol: ['104', '101'] },
-  { ti: '30', name: 'M_SP_TB_1', desc: '带时标单点遥信(SOE)', protocol: ['104', '101'] },
-  { ti: '31', name: 'M_DP_TB_1', desc: '带时标双点遥信(SOE)', protocol: ['104', '101'] },
-  { ti: '45', name: 'C_SC_NA_1', desc: '单命令遥控', protocol: ['104', '101'] },
-  { ti: '46', name: 'C_DC_NA_1', desc: '双命令遥控', protocol: ['104', '101'] },
-  { ti: '70', name: 'M_EI_NA_1', desc: '初始化结束', protocol: ['104', '101'] },
-  { ti: '100', name: 'C_IC_NA_1', desc: '总召唤命令', protocol: ['104', '101'] },
-  { ti: '101', name: 'C_CI_NA_1', desc: '电能量召唤命令', protocol: ['104', '101'] },
-  { ti: '103', name: 'C_CS_NA_1', desc: '时钟同步/读取', protocol: ['104', '101'] },
-  { ti: '104', name: 'C_TS_NA_1', desc: '测试命令', protocol: ['104', '101'] },
-  { ti: '105', name: 'C_RP_NA_1', desc: '复位进程', protocol: ['104', '101'] },
-  { ti: '120', name: 'F_AF_NA_1', desc: '文件准备就绪', protocol: ['104'] },
-  { ti: '121', name: 'F_SC_NA_1', desc: '文件选择/目录请求', protocol: ['104'] },
-  { ti: '122', name: 'F_DR_TA_1', desc: '目录传输', protocol: ['104'] },
-  { ti: '123', name: 'F_FR_NA_1', desc: '文件传输准备就绪', protocol: ['104'] },
-  { ti: '124', name: 'F_SR_NA_1', desc: '节传输准备就绪', protocol: ['104'] },
-  { ti: '125', name: 'F_SG_NA_1', desc: '段传输', protocol: ['104'] },
-  { ti: '126', name: 'F_LS_NA_1', desc: '最后段/最后节', protocol: ['104'] },
-  { ti: '127', name: 'F_AF_NA_1', desc: '文件传输确认', protocol: ['104'] },
-  { ti: '200', name: 'P_ME_NA_1', desc: '定值预置/执行(归一化)', protocol: ['104', '101'] },
-  { ti: '201', name: 'P_ME_NB_1', desc: '定值预置/执行(标度化)', protocol: ['104', '101'] },
-  { ti: '202', name: 'P_ME_NC_1', desc: '定值预置/执行(短浮点)', protocol: ['104', '101'] },
-  { ti: '203', name: 'P_AC_NA_1', desc: '定值激活', protocol: ['104', '101'] },
-  { ti: '206', name: 'M_ME_ND_1', desc: '累计量短浮点数', protocol: ['104', '101'] },
-  { ti: '207', name: 'M_ME_TD_1', desc: '带时标累计量短浮点数', protocol: ['104', '101'] },
-  { ti: '210', name: 'F_XX_XX', desc: '文件服务(私有扩展)', protocol: ['104', '101'] }
-]
+const PUBLIC_PATHS = new Set([
+  '/info',
+  '/types',
+  '/config',
+  '/system/bootstrap',
+])
 
 function authMiddleware(req: Request, res: Response, next: Function) {
-  if (!config.auth.enabled || PUBLIC_PATHS.has(req.path)) return next()
+  if (!runtime.config.auth.enabled || PUBLIC_PATHS.has(req.path)) return next()
 
-  const apiKey = req.headers['x-api-key'] as string
-    ?? (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : undefined)
+  const apiKey = (req.headers['x-api-key'] as string | undefined)
+    ?? (req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : undefined)
 
-  if (!apiKey || !config.auth.keys.includes(apiKey)) {
-    return res.status(401).json({ error: 'Invalid or missing API Key' })
+  if (!apiKey || !runtime.config.auth.keys.includes(apiKey)) {
+    runtime.logger.warn(runtime.i18n.t('logs.authRejected'), { path: req.path, ip: req.ip })
+    return res.status(401).json({ error: runtime.i18n.t('errors.invalidApiKey') })
   }
 
   next()
+}
+
+function bootstrapPayload() {
+  return {
+    apiVersion: API_VERSION,
+    locale: runtime.config.locale,
+    logger: {
+      level: runtime.config.logger.level,
+      file: runtime.logger.getCurrentLogFile(),
+      exposeDebugApi: runtime.config.logger.exposeDebugApi,
+    },
+    site: runtime.config.site,
+    theme: runtime.config.theme,
+    plugins: runtime.plugins.list(),
+  }
 }
 
 router.use(authMiddleware)
 
 router.get('/info', (_req, res) => {
   res.json({
-    name: 'IEC 104/101 Parser API',
+    name: runtime.i18n.t('api.name'),
     version: API_VERSION,
     protocols: ['IEC 60870-5-104', 'DL/T634.5101-2002'],
     endpoints: {
-      'GET /api/v1/info': 'API 信息及版本',
-      'POST /api/v1/parse': '自动识别协议解析 hex 报文',
-      'POST /api/v1/parse/104': '强制按 IEC 104 解析',
-      'POST /api/v1/parse/101': '强制按 IEC 101 解析',
-      'POST /api/v1/detect': '仅检测协议类型',
-      'POST /api/v1/parseLog': '解析含 Tx/Rx 前缀的日志文本',
-      'GET /api/v1/types': '支持的帧类型列表'
+      'GET /api/v1/info': runtime.i18n.t('api.info'),
+      'POST /api/v1/parse': runtime.i18n.t('api.parse'),
+      'POST /api/v1/parse/104': runtime.i18n.t('api.parse104'),
+      'POST /api/v1/parse/101': runtime.i18n.t('api.parse101'),
+      'POST /api/v1/detect': runtime.i18n.t('api.detect'),
+      'POST /api/v1/parseLog': runtime.i18n.t('api.parseLog'),
+      'GET /api/v1/types': runtime.i18n.t('api.types'),
+      'GET /api/v1/system/bootstrap': runtime.i18n.t('api.bootstrap'),
+      'GET /api/v1/system/plugins': runtime.i18n.t('api.plugins'),
+      'POST /api/v1/system/plugins/:id/config': 'Update plugin config',
+      'GET /api/v1/system/logs': runtime.i18n.t('api.logs'),
+      'GET /api/v1/system/internal-apis': runtime.i18n.t('api.internalApis'),
     },
-    auth: config.auth.enabled ? 'required (X-API-Key header)' : 'disabled'
+    auth: runtime.config.auth.enabled ? 'required (X-API-Key or Bearer)' : 'disabled',
   })
 })
 
 router.get('/types', (_req, res) => {
-  res.json({ types: SUPPORTED_TYPES })
+  res.json({ types: localizeParserValue(SUPPORTED_TYPES) })
 })
 
 router.get('/config', (_req, res) => {
-  res.json({ site: config.site })
+  res.json({
+    site: runtime.config.site,
+    locale: runtime.config.locale,
+    theme: runtime.config.theme,
+  })
+})
+
+router.get('/system/bootstrap', (_req, res) => {
+  res.json(bootstrapPayload())
+})
+
+router.get('/system/plugins', (_req, res) => {
+  res.json({ plugins: runtime.plugins.list() })
+})
+
+router.post('/system/plugins/:id', (req, res) => {
+  const { enabled } = req.body as { enabled?: boolean }
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: runtime.i18n.t('errors.invalidPluginState') })
+  }
+
+  const plugin = runtime.plugins.getDescriptor(req.params.id)
+  if (!plugin) return res.status(404).json({ error: runtime.i18n.t('errors.pluginNotFound') })
+
+  runtime.plugins.setEnabled(plugin.id, enabled)
+  runtime.logger.info(runtime.i18n.t('logs.pluginToggled'), { plugin: plugin.id, enabled })
+
+  res.json({
+    ok: true,
+    plugin: runtime.plugins.list().find((item) => item.id === plugin.id),
+  })
+})
+
+router.post('/system/plugins/:id/config', (req, res) => {
+  const plugin = runtime.plugins.getDescriptor(req.params.id)
+  if (!plugin) return res.status(404).json({ error: runtime.i18n.t('errors.pluginNotFound') })
+
+  const config = req.body?.config
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    return res.status(400).json({ error: 'config must be an object' })
+  }
+
+  try {
+    runtime.plugins.setConfig(plugin.id, config)
+    runtime.logger.info('plugin config updated', { plugin: plugin.id, keys: Object.keys(config) })
+
+    res.json({
+      ok: true,
+      plugin: runtime.plugins.list().find((item) => item.id === plugin.id),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    res.status(400).json({ error: message })
+  }
+})
+
+router.get('/system/logs', (req, res) => {
+  const limit = Number(req.query.limit ?? 200)
+  res.json({
+    file: runtime.logger.getCurrentLogFile(),
+    files: runtime.logger.listFiles(),
+    lines: runtime.logger.readCurrent(limit),
+  })
+})
+
+router.post('/system/logs/client', (req, res) => {
+  if (!runtime.config.logger.clientMirror) return res.json({ ok: false, mirrored: false })
+
+  const { level, message, meta } = req.body as { level?: string; message?: string; meta?: unknown }
+  if (!level || !['error', 'warn', 'info', 'debug'].includes(level)) {
+    return res.status(400).json({ error: runtime.i18n.t('errors.invalidClientLogLevel') })
+  }
+
+  runtime.logger[level as 'error' | 'warn' | 'info' | 'debug'](
+    message || runtime.i18n.t('logs.clientLogAccepted'),
+    meta,
+    'frontend',
+  )
+
+  res.json({ ok: true, mirrored: true })
+})
+
+router.get('/system/internal-apis', (_req, res) => {
+  res.json({ apis: runtime.internalApis.list() })
 })
 
 router.post('/detect', (req, res) => {
-  const hexArr = normalizeHexInput(req.body.hex)
-  if (!hexArr.length) return res.status(400).json({ error: HEX_REQUIRED_MSG })
+  const hexArr = runtime.parser.normalizeHexInput
+    ? runtime.parser.normalizeHexInput(req.body.hex)
+    : []
+
+  if (!hexArr.length) {
+    return res.status(400).json({ error: runtime.i18n.t('errors.missingHex') })
+  }
 
   const results = hexArr.map((hex) => {
-    const det = detectProtocol(hex)
-    return {
-      input: hex,
-      protocol: det.protocol,
-      cleaned: det.hexData
-    }
+    const detected = runtime.parser.detect(hex)
+    return { input: hex, protocol: detected.protocol, cleaned: detected.hexData }
   })
 
+  runtime.logger.info(runtime.i18n.t('logs.apiCalled'), { route: '/detect', count: hexArr.length })
   res.json({ success: true, results })
 })
 
 router.post('/parse', (req, res) => {
-  const hexArr = normalizeHexInput(req.body.hex)
-  if (!hexArr.length) return res.status(400).json({ error: HEX_REQUIRED_MSG })
+  const hexArr = runtime.parser.normalizeHexInput
+    ? runtime.parser.normalizeHexInput(req.body.hex)
+    : []
 
-  const { results, errors } = parseHexList(hexArr)
+  if (!hexArr.length) {
+    return res.status(400).json({ error: runtime.i18n.t('errors.missingHex') })
+  }
+
+  const { results, errors } = runtime.parser.parseHexList(hexArr)
+  runtime.logger.info(runtime.i18n.t('logs.parseAuto'), { route: '/parse', count: hexArr.length, errors: errors.length })
   res.json({ success: true, frames: results, errors })
 })
 
 router.post('/parse/104', (req, res) => {
-  const hexArr = normalizeHexInput(req.body.hex)
-  if (!hexArr.length) return res.status(400).json({ error: HEX_REQUIRED_MSG })
+  const hexArr = runtime.parser.normalizeHexInput
+    ? runtime.parser.normalizeHexInput(req.body.hex)
+    : []
 
-  const { results, errors } = parseHexList(hexArr, '104')
+  if (!hexArr.length) {
+    return res.status(400).json({ error: runtime.i18n.t('errors.missingHex') })
+  }
+
+  const { results, errors } = runtime.parser.parseHexList(hexArr, '104')
+  runtime.logger.info(runtime.i18n.t('logs.parse104'), { route: '/parse/104', count: hexArr.length, errors: errors.length })
   res.json({ success: true, protocol: '104', frames: results, errors })
 })
 
 router.post('/parse/101', (req, res) => {
-  const hexArr = normalizeHexInput(req.body.hex)
-  if (!hexArr.length) return res.status(400).json({ error: HEX_REQUIRED_MSG })
+  const hexArr = runtime.parser.normalizeHexInput
+    ? runtime.parser.normalizeHexInput(req.body.hex)
+    : []
 
-  const { results, errors } = parseHexList(hexArr, '101')
+  if (!hexArr.length) {
+    return res.status(400).json({ error: runtime.i18n.t('errors.missingHex') })
+  }
+
+  const { results, errors } = runtime.parser.parseHexList(hexArr, '101')
+  runtime.logger.info(runtime.i18n.t('logs.parse101'), { route: '/parse/101', count: hexArr.length, errors: errors.length })
   res.json({ success: true, protocol: '101', frames: results, errors })
 })
 
 router.post('/parseLog', (req, res) => {
   const { logText, forceProtocol } = req.body as { logText?: string; forceProtocol?: string }
-  if (typeof logText !== 'string') return res.status(400).json({ error: LOG_TEXT_REQUIRED_MSG })
+  if (typeof logText !== 'string') {
+    return res.status(400).json({ error: runtime.i18n.t('errors.invalidLogText') })
+  }
 
-  const normalizedForce = forceProtocol === '101' || forceProtocol === '104' ? forceProtocol : undefined
-  res.json({ success: true, lines: parseLogText(logText, normalizedForce) })
+  const normalizedForce = forceProtocol === '101' || forceProtocol === '104'
+    ? forceProtocol
+    : undefined
+
+  const lines = runtime.parser.parseLogText(logText, normalizedForce)
+  runtime.logger.info(runtime.i18n.t('logs.parseLog'), {
+    route: '/parseLog',
+    forceProtocol: normalizedForce ?? 'auto',
+    lines: logText.split(/\r?\n/).length,
+  })
+
+  res.json({ success: true, lines })
 })
 
 export default router

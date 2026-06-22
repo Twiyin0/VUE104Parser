@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 // 104ParserClass.js
 // IEC 60870-5-104 / DL/T634.5104 规约解析器（完整修复版）
 // 修复记录：
@@ -15,8 +16,7 @@
 //   [FIX-12] 新增 TI=207 带时标累计量短浮点数解析
 //   [FIX-13] parseParamCommand TI=202 COT=7: 修正读响应结构，统一 PI 在首位读取
 
-'use strict';
-const Buffer = require('buffer').Buffer;
+import { Buffer } from 'node:buffer'
 
 // ── 常量表 ───────────────────────────────────────────────────────────────────
 
@@ -1236,4 +1236,5 @@ class Parser104 {
     }
 }
 
-module.exports = Parser104;
+export default Parser104
+

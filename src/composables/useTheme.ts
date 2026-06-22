@@ -1,27 +1,15 @@
-import { ref, onMounted } from 'vue'
-
-const isDark = ref(false)
+import { storeToRefs } from 'pinia'
+import { useRuntimeStore } from '../stores/runtime'
 
 export function useTheme() {
-  function apply(dark: boolean) {
-    isDark.value = dark
-    document.documentElement.classList.toggle('dark', dark)
+  const runtime = useRuntimeStore()
+  const { availableThemes, themeId, themeMode } = storeToRefs(runtime)
+
+  return {
+    availableThemes,
+    themeId,
+    themeMode,
+    setTheme: runtime.setTheme,
+    setThemeMode: runtime.setThemeMode,
   }
-
-  function toggle() {
-    const next = !isDark.value
-    localStorage.setItem('theme', next ? 'dark' : 'light')
-    apply(next)
-  }
-
-  onMounted(() => {
-    const saved = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    apply(saved ? saved === 'dark' : prefersDark)
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (!localStorage.getItem('theme')) apply(e.matches)
-    })
-  })
-
-  return { isDark, toggle }
 }

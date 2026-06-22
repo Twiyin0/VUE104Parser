@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "server/**/*", "upload/**/*"]
+  "include": ["src/**/*", "server/**/*", "src_parsers/**/*", "upload/**/*"]
 }

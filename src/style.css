@@ -2,10 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --app-accent: #0f766e;
+  --app-accent-soft: rgba(15, 118, 110, 0.18);
+  --app-panel-glow: radial-gradient(circle at top, rgba(20, 184, 166, 0.18), transparent 45%);
+}
+
 /* ── 滚动条 & 基础 ── */
 @layer base {
   html { @apply antialiased; }
   * { @apply box-border; }
+  body {
+    @apply min-h-screen bg-slate-100 text-slate-900 transition-colors;
+    background-image:
+      radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 30%),
+      linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,245,249,0.92)),
+      var(--app-panel-glow);
+  }
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+    background-image:
+      radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 28%),
+      linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.98)),
+      var(--app-panel-glow);
+  }
 }
 
 /* ── 自定义组件类 ── */
@@ -19,7 +39,17 @@
   .pname-none { @apply text-gray-300 dark:text-gray-600 text-xs; }
 
   /* 折叠区块 */
-  .cs { @apply bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden; }
+  .cs {
+    @apply rounded-2xl border overflow-hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+    border-color: rgba(226, 232, 240, 0.9);
+    box-shadow: 0 14px 34px -30px rgba(15, 23, 42, 0.24);
+  }
+  .dark .cs {
+    background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(15,23,42,0.98));
+    border-color: rgba(51, 65, 85, 0.9);
+    box-shadow: 0 20px 42px -30px rgba(2, 6, 23, 0.75);
+  }
   .cs-head {
     @apply flex items-center justify-between px-4 py-3 cursor-pointer select-none
            bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors;
@@ -46,7 +76,15 @@
   body.has-db .col-name { @apply table-cell; }
 
   /* DB Bar */
-  .db-bar { @apply flex items-center gap-2.5 flex-wrap mb-4 px-4 py-2.5 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-800/50 transition-all; }
+  .db-bar {
+    @apply flex items-center gap-2.5 flex-wrap mb-4 px-4 py-2.5 border border-dashed rounded-xl transition-all;
+    border-color: rgba(203, 213, 225, 0.95);
+    background: rgba(248, 250, 252, 0.88);
+  }
+  .dark .db-bar {
+    border-color: rgba(71, 85, 105, 0.88);
+    background: rgba(15, 23, 42, 0.58);
+  }
   .db-bar.ok  { @apply border-solid border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20; }
   .db-bar.err { @apply border-solid border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20; }
   .db-bar.loading { @apply border-amber-400 bg-amber-50 dark:bg-amber-900/20; }
@@ -75,6 +113,16 @@
   .btn-primary { @apply bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/30 hover:bg-blue-700; }
   .btn-ghost   { @apply bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700; }
   .btn-green   { @apply bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/30 hover:bg-emerald-700; }
+  .app-secondary-btn {
+    @apply inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-700
+           bg-white/80 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200
+           hover:border-[var(--app-accent)] hover:text-[var(--app-accent)] transition-colors backdrop-blur;
+  }
+  .app-icon-btn {
+    @apply inline-flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-700
+           bg-white/80 dark:bg-slate-900/70 w-10 h-10 text-lg text-slate-600 dark:text-slate-300
+           hover:border-[var(--app-accent)] hover:text-[var(--app-accent)] transition-colors;
+  }
 
   /* mono */
   .mono { @apply font-mono; }
@@ -183,6 +231,388 @@
   .placeholder { @apply text-center text-slate-400 dark:text-slate-600 py-3 text-xs; }
   .log-empty { @apply text-slate-400 dark:text-slate-600 text-xs; }
   .empty-hint { @apply text-center text-slate-400 dark:text-slate-500 py-8 text-sm; }
+  .app-shell { @apply min-h-screen flex flex-col; }
+  .app-topbar {
+    @apply sticky top-0 z-20 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 border-b backdrop-blur-xl;
+    border-color: rgba(226, 232, 240, 0.9);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 14px 30px -28px rgba(15, 23, 42, 0.28);
+  }
+  .dark .app-topbar {
+    border-color: rgba(30, 41, 59, 0.92);
+    background: rgba(2, 6, 23, 0.8);
+    box-shadow: 0 18px 34px -28px rgba(2, 6, 23, 0.72);
+  }
+  .app-brand { @apply min-w-[200px]; }
+  .app-brand-title { @apply text-base font-semibold tracking-tight; }
+  .app-brand-subtitle { @apply text-[11px] text-slate-500 dark:text-slate-400 mt-0.5; }
+  .app-nav { @apply flex items-center gap-2 flex-wrap; }
+  .app-nav-link {
+    @apply inline-flex items-center rounded-full px-3.5 py-1.5 text-sm text-slate-600 dark:text-slate-300
+           hover:text-[var(--app-accent)] transition-colors;
+    background: rgba(255, 255, 255, 0.36);
+  }
+  .dark .app-nav-link {
+    background: rgba(15, 23, 42, 0.32);
+  }
+  .app-nav-link.active {
+    @apply text-white;
+    background: var(--app-accent);
+  }
+  .app-actions { @apply ml-auto flex items-center gap-2.5 flex-wrap; }
+  .app-main { @apply flex-1 px-4 py-5; }
+  .app-loading { @apply flex-1 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400; }
+
+  .page-view { @apply flex justify-center p-2 md:p-3; }
+  .page-surface {
+    @apply w-full rounded-[28px] border p-5;
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,252,0.96));
+    border-color: rgba(226, 232, 240, 0.9);
+    box-shadow:
+      0 26px 54px -42px rgba(15, 23, 42, 0.28),
+      inset 0 1px 0 rgba(255,255,255,0.75);
+  }
+  .dark .page-surface {
+    background: linear-gradient(180deg, rgba(15,23,42,0.88), rgba(15,23,42,0.96));
+    border-color: rgba(51, 65, 85, 0.92);
+    box-shadow:
+      0 30px 60px -42px rgba(2, 6, 23, 0.82),
+      inset 0 1px 0 rgba(148,163,184,0.06);
+  }
+
+  .page-hero {
+    @apply mb-4 rounded-2xl border p-4 shadow-sm;
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--app-accent) 12%, transparent), transparent 38%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 250, 252, 0.98));
+    border-color: color-mix(in srgb, var(--app-accent) 16%, rgba(203, 213, 225, 0.85));
+  }
+  .dark .page-hero {
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--app-accent) 20%, transparent), transparent 42%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.96));
+    border-color: color-mix(in srgb, var(--app-accent) 24%, rgba(71, 85, 105, 0.72));
+  }
+  .page-hero-blue { box-shadow: 0 18px 36px -30px color-mix(in srgb, var(--app-accent) 42%, transparent); }
+  .page-hero-violet { box-shadow: 0 18px 36px -30px rgba(139, 92, 246, 0.3); }
+  .page-hero-head { @apply flex items-start justify-between gap-4 flex-wrap; }
+  .page-hero-heading { @apply min-w-0 flex-1; }
+  .page-hero-title-row { @apply flex items-start justify-between gap-4 flex-wrap; }
+  .page-hero-title { @apply flex items-center gap-3 text-[1.8rem] font-bold tracking-tight text-slate-900 dark:text-slate-50; }
+  .page-hero-icon { @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl text-2xl; background: color-mix(in srgb, var(--app-accent) 14%, white); }
+  .dark .page-hero-icon { background: color-mix(in srgb, var(--app-accent) 20%, rgba(15,23,42,0.8)); }
+  .page-hero-badges { @apply flex flex-wrap items-center justify-end gap-2 pt-1; }
+  .page-hero-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm border;
+    color: rgba(15, 23, 42, 0.78);
+    border-color: rgba(226, 232, 240, 0.92);
+    background: rgba(255, 255, 255, 0.84);
+  }
+  .dark .page-hero-badge {
+    color: rgba(241, 245, 249, 0.94);
+    border-color: rgba(71, 85, 105, 0.86);
+    background: rgba(15, 23, 42, 0.56);
+  }
+  .page-hero-badge-blue {
+    color: #1d4ed8;
+    border-color: rgba(147, 197, 253, 0.92);
+    background: rgba(219, 234, 254, 0.95);
+  }
+  .page-hero-badge-cyan {
+    color: #0f766e;
+    border-color: rgba(153, 246, 228, 0.92);
+    background: rgba(204, 251, 241, 0.96);
+  }
+  .page-hero-badge-violet {
+    color: #6d28d9;
+    border-color: rgba(196, 181, 253, 0.92);
+    background: rgba(237, 233, 254, 0.96);
+  }
+  .page-hero-badge-slate {
+    color: #475569;
+    border-color: rgba(203, 213, 225, 0.96);
+    background: rgba(241, 245, 249, 0.96);
+  }
+  .dark .page-hero-badge-blue {
+    color: #bfdbfe;
+    border-color: rgba(37, 99, 235, 0.5);
+    background: rgba(30, 64, 175, 0.22);
+  }
+  .dark .page-hero-badge-cyan {
+    color: #99f6e4;
+    border-color: rgba(13, 148, 136, 0.46);
+    background: rgba(17, 94, 89, 0.24);
+  }
+  .dark .page-hero-badge-violet {
+    color: #ddd6fe;
+    border-color: rgba(109, 40, 217, 0.45);
+    background: rgba(76, 29, 149, 0.24);
+  }
+  .dark .page-hero-badge-slate {
+    color: #cbd5e1;
+    border-color: rgba(71, 85, 105, 0.88);
+    background: rgba(30, 41, 59, 0.5);
+  }
+  .page-hero-copy { @apply mt-3 space-y-2 text-sm leading-7 text-slate-600 dark:text-slate-300; }
+  .page-hero-copy code {
+    @apply rounded-md px-1.5 py-0.5 text-xs text-slate-700 dark:text-slate-100;
+    background: rgba(148, 163, 184, 0.18);
+  }
+
+  .theme-control { @apply flex items-center gap-2 flex-wrap; }
+  .theme-control-item {
+    @apply inline-flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700
+           bg-white/90 dark:bg-slate-900/70 px-2.5 py-1.5 text-sm text-slate-700 dark:text-slate-200 backdrop-blur;
+  }
+  .theme-control-item span { @apply text-xs text-slate-500 dark:text-slate-400; }
+  .theme-control-item select { @apply min-w-[92px]; }
+
+  .app-select {
+    @apply rounded-xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-slate-900
+           px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 outline-none transition-colors
+           focus:border-[var(--app-accent)] focus:ring-2 focus:ring-[var(--app-accent-soft)];
+    color-scheme: light;
+  }
+  .dark .app-select {
+    color-scheme: dark;
+  }
+  .app-select-sm { @apply px-2 py-1 text-xs rounded-lg; }
+  .theme-select {
+    @apply border-0 bg-transparent px-1 py-0 min-w-[92px] focus:ring-0;
+  }
+  .app-select option {
+    @apply bg-white text-slate-800;
+  }
+  .dark .app-select option {
+    @apply bg-slate-900 text-slate-100;
+  }
+  .app-input {
+    @apply rounded-xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-slate-900
+           px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-colors
+           focus:border-[var(--app-accent)] focus:ring-2 focus:ring-[var(--app-accent-soft)];
+  }
+
+  .app-overlay { @apply fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-md p-4 flex justify-end; }
+  .app-drawer {
+    @apply w-full max-w-xl h-full rounded-[32px] border overflow-hidden flex flex-col;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    box-shadow:
+      0 30px 70px -34px rgba(15, 23, 42, 0.4),
+      inset 0 1px 0 rgba(255,255,255,0.78);
+  }
+  .dark .app-drawer {
+    border-color: rgba(51, 65, 85, 0.94);
+    background: linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.98));
+    box-shadow:
+      0 34px 76px -34px rgba(2, 6, 23, 0.82),
+      inset 0 1px 0 rgba(148,163,184,0.08);
+  }
+  .app-drawer-wide { @apply max-w-4xl; }
+  .app-drawer-head {
+    @apply flex items-start justify-between gap-4 px-6 py-5 border-b;
+    border-color: rgba(226, 232, 240, 0.9);
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--app-accent) 12%, transparent), transparent 40%),
+      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(248,250,252,0.98));
+  }
+  .dark .app-drawer-head {
+    border-color: rgba(30, 41, 59, 0.92);
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--app-accent) 16%, transparent), transparent 42%),
+      linear-gradient(180deg, rgba(15,23,42,0.94), rgba(15,23,42,0.98));
+  }
+  .app-drawer-head h2 { @apply text-lg font-semibold; }
+  .app-drawer-head p { @apply text-sm text-slate-500 dark:text-slate-400 mt-1; }
+  .app-drawer-body { @apply flex-1 overflow-auto p-4; }
+
+  .plugin-list { @apply space-y-3; }
+  .plugin-card {
+    @apply rounded-3xl border p-4;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+    box-shadow: 0 16px 34px -32px rgba(15, 23, 42, 0.22);
+  }
+  .dark .plugin-card {
+    border-color: rgba(51, 65, 85, 0.9);
+    background: linear-gradient(180deg, rgba(15,23,42,0.88), rgba(15,23,42,0.96));
+    box-shadow: 0 20px 40px -34px rgba(2, 6, 23, 0.8);
+  }
+  .plugin-card-head { @apply flex items-start justify-between gap-4; }
+  .plugin-card-main { @apply min-w-0 flex-1; }
+  .plugin-card-name { @apply text-lg font-semibold text-slate-900 dark:text-slate-100; }
+  .plugin-card-id { @apply text-xs text-slate-400 dark:text-slate-500 mt-1; }
+  .plugin-card-tags { @apply mt-3 flex flex-wrap gap-2; }
+  .plugin-tag {
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em];
+    color: #475569;
+    border-color: rgba(203, 213, 225, 0.96);
+    background: rgba(241, 245, 249, 0.96);
+  }
+  .dark .plugin-tag {
+    color: #cbd5e1;
+    border-color: rgba(71, 85, 105, 0.88);
+    background: rgba(30, 41, 59, 0.52);
+  }
+  .plugin-tag-core { color: #6d28d9; border-color: rgba(196, 181, 253, 0.92); background: rgba(237, 233, 254, 0.98); }
+  .plugin-tag-theme { color: #0f766e; border-color: rgba(153, 246, 228, 0.92); background: rgba(204, 251, 241, 0.98); }
+  .plugin-tag-tooling { color: #1d4ed8; border-color: rgba(147, 197, 253, 0.92); background: rgba(219, 234, 254, 0.98); }
+  .plugin-tag-cyan { color: #0f766e; border-color: rgba(153, 246, 228, 0.92); background: rgba(204, 251, 241, 0.98); }
+  .plugin-tag-blue { color: #1d4ed8; border-color: rgba(147, 197, 253, 0.92); background: rgba(219, 234, 254, 0.98); }
+  .dark .plugin-tag-core { color: #ddd6fe; border-color: rgba(109, 40, 217, 0.45); background: rgba(76, 29, 149, 0.24); }
+  .dark .plugin-tag-theme { color: #99f6e4; border-color: rgba(13, 148, 136, 0.46); background: rgba(17, 94, 89, 0.24); }
+  .dark .plugin-tag-tooling { color: #bfdbfe; border-color: rgba(37, 99, 235, 0.5); background: rgba(30, 64, 175, 0.22); }
+  .dark .plugin-tag-cyan { color: #99f6e4; border-color: rgba(13, 148, 136, 0.46); background: rgba(17, 94, 89, 0.24); }
+  .dark .plugin-tag-blue { color: #bfdbfe; border-color: rgba(37, 99, 235, 0.5); background: rgba(30, 64, 175, 0.22); }
+  .plugin-card-side { @apply flex items-center gap-3 shrink-0 self-start rounded-2xl border px-3 py-2; border-color: rgba(226, 232, 240, 0.92); background: rgba(248, 250, 252, 0.94); }
+  .dark .plugin-card-side { border-color: rgba(51, 65, 85, 0.88); background: rgba(15, 23, 42, 0.72); }
+  .plugin-state-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+    color: #64748b;
+    background: rgba(226, 232, 240, 0.9);
+  }
+  .plugin-state-pill.enabled {
+    color: #0f766e;
+    background: rgba(204, 251, 241, 0.98);
+  }
+  .dark .plugin-state-pill {
+    color: #cbd5e1;
+    background: rgba(51, 65, 85, 0.92);
+  }
+  .dark .plugin-state-pill.enabled {
+    color: #99f6e4;
+    background: rgba(17, 94, 89, 0.34);
+  }
+  .plugin-card-desc { @apply mt-4 text-sm text-slate-600 dark:text-slate-300 leading-7; }
+  .plugin-switch { @apply relative inline-flex cursor-pointer; }
+  .plugin-switch input { @apply sr-only; }
+  .plugin-switch-track {
+    @apply relative inline-flex h-7 w-12 items-center rounded-full border transition-colors duration-200;
+    border-color: rgba(203, 213, 225, 0.92);
+    background: rgba(226, 232, 240, 0.95);
+  }
+  .dark .plugin-switch-track {
+    border-color: rgba(71, 85, 105, 0.9);
+    background: rgba(51, 65, 85, 0.9);
+  }
+  .plugin-switch-thumb {
+    @apply ml-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200;
+    box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.45);
+  }
+  .plugin-switch input:checked + .plugin-switch-track {
+    border-color: rgba(20, 184, 166, 0.55);
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.92), rgba(15, 118, 110, 0.9));
+  }
+  .plugin-switch input:checked + .plugin-switch-track .plugin-switch-thumb { @apply translate-x-5; }
+  .plugin-config {
+    @apply mt-4 rounded-2xl border p-4 space-y-3;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: rgba(248, 250, 252, 0.72);
+  }
+  .dark .plugin-config {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: rgba(2, 6, 23, 0.36);
+  }
+  .plugin-config-togglebar {
+    @apply w-full flex items-center justify-between gap-3 text-left;
+  }
+  .plugin-config-title { @apply text-sm font-semibold text-slate-800 dark:text-slate-100; }
+  .plugin-config-chevron {
+    @apply inline-flex items-center justify-center text-slate-400 dark:text-slate-500 transition-transform duration-200;
+  }
+  .plugin-config-chevron.open { @apply rotate-180; }
+  .plugin-config-body { @apply mt-3 space-y-3; }
+  .plugin-config-field { @apply space-y-1.5; }
+  .plugin-config-label { @apply flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200; }
+  .plugin-config-input { @apply w-full; }
+  .plugin-config-help { @apply text-xs leading-6 text-slate-500 dark:text-slate-400; }
+  .plugin-config-toggle { @apply inline-flex items-center; }
+  .plugin-config-toggle input { @apply h-4 w-4 rounded border-slate-300 dark:border-slate-700 accent-[var(--app-accent)]; }
+  .plugin-config-actions { @apply flex items-center gap-3 flex-wrap pt-1; }
+  .plugin-config-success { @apply text-xs text-emerald-600 dark:text-emerald-300; }
+  .plugin-config-error { @apply text-xs text-red-500 dark:text-red-300; }
+  .plugin-empty { @apply text-sm text-slate-400 dark:text-slate-500 p-6; }
+
+  .log-viewer {
+    @apply flex-1 rounded-3xl border p-4 text-xs leading-6 overflow-auto font-mono space-y-2;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: rgba(248, 250, 252, 0.94);
+    color: rgb(51 65 85);
+  }
+  .dark .log-viewer {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: rgba(2, 6, 23, 0.72);
+    color: rgb(226 232 240);
+  }
+  .log-viewer-empty {
+    @apply flex-1 rounded-3xl border p-4 text-sm text-slate-400 dark:text-slate-500;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: rgba(248, 250, 252, 0.94);
+  }
+  .dark .log-viewer-empty {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: rgba(2, 6, 23, 0.72);
+  }
+  .log-line {
+    @apply px-3 py-1.5 rounded-xl whitespace-pre-wrap break-all;
+    color: rgb(51 65 85);
+  }
+  .dark .log-line {
+    color: rgb(226 232 240);
+  }
+  .log-line-scope,
+  .log-line-level,
+  .log-line-time,
+  .log-line-message { @apply align-middle; }
+  .log-line-scope {
+    @apply font-semibold;
+    color: #0f766e;
+  }
+  .dark .log-line-scope {
+    color: #99f6e4;
+  }
+  .log-line-level { @apply font-semibold; }
+  .log-line-time {
+    @apply mx-1;
+    color: #94a3b8;
+  }
+  .dark .log-line-time {
+    color: #64748b;
+  }
+  .log-line-level-error,
+  .log-line-message-error {
+    color: #dc2626;
+  }
+  .log-line-level-warn,
+  .log-line-message-warn {
+    color: #d97706;
+  }
+  .log-line-level-info,
+  .log-line-message-info {
+    color: #2563eb;
+  }
+  .log-line-level-debug,
+  .log-line-message-debug {
+    color: #ea580c;
+  }
+  .dark .log-line-level-error,
+  .dark .log-line-message-error {
+    color: #fca5a5;
+  }
+  .dark .log-line-level-warn,
+  .dark .log-line-message-warn {
+    color: #fcd34d;
+  }
+  .dark .log-line-level-info,
+  .dark .log-line-message-info {
+    color: #93c5fd;
+  }
+  .dark .log-line-level-debug,
+  .dark .log-line-message-debug {
+    color: #fdba74;
+  }
+  .log-line-text { @apply text-inherit; }
+  .log-line-plain { @apply text-slate-500 dark:text-slate-400; }
 }
 
 /* type-tag 原生CSS，避免@layer components purge问题 */

@@ -1,12 +1,33 @@
 <script setup lang="ts">
 import { useTheme } from '../composables/useTheme'
-const { isDark, toggle } = useTheme()
+import { useI18n } from '../composables/useI18n'
+
+const { availableThemes, themeId, themeMode, setTheme, setThemeMode } = useTheme()
+const { t } = useI18n()
 </script>
 
 <template>
-  <button @click="toggle"
-    class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-300 dark:border-slate-600
-           bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ml-auto">
-    {{ isDark ? '☀️ 亮色' : '🌙 暗色' }}
-  </button>
+  <div class="theme-control">
+    <label class="theme-control-item">
+      <span>{{ t('theme.mode', 'Mode') }}</span>
+      <select
+        class="app-select theme-select"
+        :value="themeMode"
+        @change="setThemeMode(($event.target as HTMLSelectElement).value as 'system' | 'light' | 'dark')"
+      >
+        <option value="system">{{ t('theme.system', 'System') }}</option>
+        <option value="light">{{ t('theme.light', 'Light') }}</option>
+        <option value="dark">{{ t('theme.dark', 'Dark') }}</option>
+      </select>
+    </label>
+
+    <label class="theme-control-item">
+      <span>{{ t('theme.palette', 'Theme') }}</span>
+      <select class="app-select theme-select" :value="themeId" @change="setTheme(($event.target as HTMLSelectElement).value)">
+        <option v-for="theme in availableThemes" :key="theme.id" :value="theme.id">
+          {{ t(theme.labelKey, theme.id) }}
+        </option>
+      </select>
+    </label>
+  </div>
 </template>

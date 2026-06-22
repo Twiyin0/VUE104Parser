@@ -1,21 +1,45 @@
-# IEC 104/101 Parser 配置文件
+# Vue104Parser runtime configuration
 
 server:
   port: 33104
 
 cors:
   enabled: true
-  origins: "*"  # "*" 允许所有来源，或指定数组 ["https://example.com", "http://localhost:3000"]
+  origins: "*"
 
 auth:
-  enabled: false  # 设为 true 开启 API Key 校验
-  keys:           # 有效的 API Key 列表
+  enabled: false
+  keys:
     - "your-secret-key-here"
 
-# 站点信息（显示在页面底部 footer）
+locale:
+  default: "zh-cn"
+  fallback: "en"
+  frontend: "zh-cn"
+  backend: "zh-cn"
+
+logger:
+  level: 3
+  dir: "data/log"
+  exposeDebugApi: true
+  clientMirror: true
+
+plugins:
+  enabled:
+    - "core.parser"
+    - "core.log-viewer"
+    - "core.db-tools"
+    - "core.theme-ocean"
+    - "core.theme-graphite"
+  stateFile: "data/plugins.json"
+
+theme:
+  defaultMode: "system"
+  defaultTheme: "theme-ocean"
+
 site:
   copyright: "© 2026 Vue104Parser by Twiyin0"
-  icp: ""                # ICP 备案号，如 "京ICP备XXXXXXXX号"
+  icp: ""
   icp_url: "https://beian.miit.gov.cn/"
-  police: ""             # 公安备案号，如 "京公网安备XXXXXXXXXX号"
+  police: ""
   police_url: "https://www.beian.gov.cn/"

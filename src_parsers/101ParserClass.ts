@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 // 101ParserClass.js
 // DL/T634.5101-2002 规约解析器
 //
@@ -13,8 +14,7 @@
 //   [D-05] TI=210 私有扩展文件服务（与104共用相同ASDU结构）
 //   [D-06] ASDU结构（TI/VSQ/COT/公共地址/信息对象）与104完全相同，复用104的ASDU解析逻辑
 
-'use strict';
-const Buffer = require('buffer').Buffer;
+import { Buffer } from 'node:buffer'
 
 // ── 常量表 ───────────────────────────────────────────────────────────────────
 
@@ -193,6 +193,7 @@ class Parser101 {
                 cs, csCalc,
                 csValid  : cs === csCalc,
                 asdu     : null,          // 固定帧无ASDU
+                frameLength: 6,
             };
         }
 
@@ -223,6 +224,7 @@ class Parser101 {
                 cs, csCalc,
                 csValid  : cs === csCalc,
                 asduBuf,
+                frameLength: totalLen,
             };
         }
 
@@ -372,6 +374,7 @@ class Parser101 {
         const results  = [];
         const isSingle = (ti === 45);
         const ptType   = isSingle ? 'single(单点)' : 'double(双点)';
+        const effectiveNum = num > 0 ? num : ((sq === 0 && asdu.length - offset >= 3) ? 1 : 0);
 
         const parseOne = (objAddr, rawByte) => {
             const s_e    = (rawByte >> 7) & 0x01;
@@ -406,7 +409,7 @@ class Parser101 {
         };
 
         if (sq === 0) {
-            for (let i = 0; i < num; i++) {
+            for (let i = 0; i < effectiveNum; i++) {
                 if (asdu.length - offset < 3) throw new Error('Control item too short');
                 const objAddr = asdu.readUInt16LE(offset); offset += 2;  // [D-02]
                 const raw     = asdu.readUInt8(offset);    offset += 1;
@@ -415,7 +418,7 @@ class Parser101 {
         } else {
             if (asdu.length - offset < 2) throw new Error('Control base addr missing');
             const baseAddr = asdu.readUInt16LE(offset); offset += 2;  // [D-02]
-            for (let j = 0; j < num; j++) {
+            for (let j = 0; j < effectiveNum; j++) {
                 const raw = asdu.readUInt8(offset); offset += 1;
                 results.push({ slot: j + 1, ...parseOne(baseAddr + j, raw) });
             }
@@ -1084,8 +1087,33 @@ class Parser101 {
             throw new Error('Invalid input type');
         };
         const buffers = Array.isArray(input) ? input.map(toBuffer) : [toBuffer(input)];
-        return buffers.map(buf => Parser101.parseFrame101(buf));
+        return buffers.flatMap(buf => {
+            const frames = [];
+            let offset = 0;
+
+            while (offset < buf.length) {
+                const chunk = buf.slice(offset);
+                const parsed = Parser101.parseFrame(chunk);
+
+                if (parsed.frameType === 'error') {
+                    frames.push({ ...parsed, protocol: '101' });
+                    break;
+                }
+
+                const frameLength = Number(parsed.frameLength) || 0;
+                if (frameLength <= 0 || frameLength > chunk.length) {
+                    frames.push({ type: 'error', error: 'Invalid 101 frame length', protocol: '101' });
+                    break;
+                }
+
+                frames.push(Parser101.parseFrame101(chunk.slice(0, frameLength)));
+                offset += frameLength;
+            }
+
+            return frames;
+        });
     }
 }
 
-module.exports = Parser101;
+export default Parser101
+

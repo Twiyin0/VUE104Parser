@@ -1,52 +1,52 @@
 # Vue104Parser
 
-IEC 60870-5-104 / DL/T634.5101-2002 parser workstation with a refactored runtime core, frontend/backend i18n, plugin scaffolding, theme system, and structured logging.
+基于 IEC 60870-5-104 / DL/T634.5101-2002 的规约解析工作台，包含重构后的运行时核心、前后端 i18n、插件脚手架、主题系统和结构化日志能力。
 
-中文说明: [README.zh-CN.md](README.zh-CN.md)
+English version: [README.md](README.md)
 
-## Highlights
+## 特性概览
 
-- Parser-first backend core with internal APIs for future plugins.
-- Frontend and backend i18n with English fallback.
-- Runtime plugin registry for both frontend and backend capabilities.
-- Theme system prepared for plugin-contributed theme presets.
-- File-based logger with `error/warn/info/debug` levels and debug log viewer API.
-- Existing parser compatibility preserved through `src_parsers/101ParserClass.js` and `src_parsers/104ParserClass.js`.
+- 以解析器为核心的后端运行时，并预留内部 API 供后续插件扩展。
+- 前后端均支持 i18n，英文兜底，降低编码和乱码风险。
+- 统一的运行时插件注册表，支持前端与后端能力描述。
+- 主题系统已为插件注入主题预设做好准备。
+- 基于文件的日志系统，支持 `error/warn/info/debug` 四级日志和调试日志查看接口。
+- 保持现有解析能力兼容，核心协议解析位于 `src_parsers/101ParserClass.ts` 与 `src_parsers/104ParserClass.ts`。
 
-## Architecture
+## 系统架构
 
 ```mermaid
 flowchart TB
-  User[Browser User]
+  User[浏览器用户]
 
-  subgraph Frontend
-    App[App Shell]
-    RuntimeStore[Runtime Store]
-    Hex[Hex Parser View]
-    Log[File Parser View]
-    PluginDrawer[Plugin Center]
-    LogDrawer[Debug Log Drawer]
-    Theme[Theme Runtime]
-    Db[Point Table Store]
+  subgraph Frontend[前端]
+    App[应用外壳]
+    RuntimeStore[运行时状态]
+    Hex[实时解析页面]
+    Log[日志解析页面]
+    PluginDrawer[插件中心]
+    LogDrawer[调试日志面板]
+    Theme[主题运行时]
+    Db[点表状态]
   end
 
-  subgraph Backend
-    Server[Express Server]
-    Api[API Router]
-    Runtime[Backend Runtime]
-    ParserService[Parser Service]
-    PluginManager[Plugin Manager]
-    Logger[Logger Service]
-    I18n[I18n Service]
-    InternalApis[Internal API Registry]
+  subgraph Backend[后端]
+    Server[Express 服务]
+    Api[API 路由]
+    Runtime[后端运行时]
+    ParserService[解析服务]
+    PluginManager[插件管理器]
+    Logger[日志服务]
+    I18n[I18n 服务]
+    InternalApis[内部 API 注册表]
   end
 
-  subgraph ParserCore
-    P104[104 Parser]
-    P101[101 Parser]
+  subgraph ParserCore[解析核心]
+    P104[104 解析器]
+    P101[101 解析器]
   end
 
-  subgraph Assets
+  subgraph Assets[资源与状态]
     FrontI18n[public/i18n/zh-cn.yml]
     BackI18n[server/i18n/zh-cn.json]
     Config[config.yml]
@@ -86,10 +86,10 @@ flowchart TB
   App --> FrontI18n
   I18n --> BackI18n
 
-  Standard -. reference .-> ParserCore
+  Standard -. 规范参考 .-> ParserCore
 ```
 
-## Directory Layout
+## 目录结构
 
 ```text
 VUE104Parser/
@@ -119,14 +119,16 @@ VUE104Parser/
 │  ├─ App.vue
 │  └─ main.ts
 ├─ src_parsers/
-│  ├─ 101ParserClass.js
-│  └─ 104ParserClass.js
+│  ├─ 101ParserClass.ts
+│  └─ 104ParserClass.ts
 └─ docs/
    ├─ API.md
-   └─ PLUGIN_SYSTEM.md
+   ├─ API.zh-CN.md
+   ├─ PLUGIN_SYSTEM.md
+   └─ PLUGIN_SYSTEM.zh-CN.md
 ```
 
-## Runtime Configuration
+## 运行时配置
 
 `config.yml`
 
@@ -160,7 +162,7 @@ theme:
   defaultTheme: "theme-ocean"
 ```
 
-## Development
+## 开发
 
 ```bash
 yarn
@@ -168,34 +170,34 @@ yarn dev
 yarn build
 ```
 
-Backend runs with `tsx watch server/server.ts`, frontend runs with Vite.
+后端默认使用 `tsx watch server/server.ts`，前端使用 Vite。
 
-## Logging
+## 日志
 
 - `error = 1`
 - `warn = 2`
 - `info = 3`
 - `debug = 4`
 
-Log files are stored in `data/log/yyyyMMdd_n.log`. Each restart creates a new incremented file for the same day.
+日志文件保存在 `data/log/yyyyMMdd_n.log`，同一天内每次重启都会生成新的递增文件。
 
-Log line format:
+日志格式示例：
 
 ```text
 [backend][info]2026-06-22 12:00:00: parsed protocol payload {"route":"/parse","count":3}
 ```
 
-Frontend can view current logs through the debug log drawer and the `/api/v1/system/logs` endpoint.
+前端可通过调试日志面板查看当前日志，也可通过 `/api/v1/system/logs` 拉取。
 
-## Documentation
+## 文档
 
 - [API documentation](docs/API.md)
 - [API 文档](docs/API.zh-CN.md)
 - [Plugin system documentation](docs/PLUGIN_SYSTEM.md)
 - [插件系统文档](docs/PLUGIN_SYSTEM.zh-CN.md)
 
-## Current Migration Notes
+## 当前迁移状态
 
-- Backend runtime, plugin registry, logger, and i18n infrastructure are already migrated.
-- Frontend shell, theme runtime, plugin drawer, and debug log drawer are migrated.
-- Existing parser pages still contain legacy rendering code and should be progressively migrated to the new i18n/runtime style in later iterations.
+- 后端运行时、插件注册表、日志系统和 i18n 基础设施已迁移完成。
+- 前端外壳、主题运行时、插件中心和调试日志面板已迁移完成。
+- 现有解析页面仍保留部分旧渲染逻辑，后续可继续迁移到新的 i18n / runtime / plugin 风格。
