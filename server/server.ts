@@ -53,6 +53,12 @@ app.post('/parseLog', express.json({ limit: '100mb' }), (req, res) => {
   res.json({ lines: runtime.parser.parseLogText(logText, normalizedForce) })
 })
 
+app.get('*', (req, res, next) => {
+  if (!req.accepts('html')) return next()
+  if (path.extname(req.path)) return next()
+  res.sendFile(path.join(__dirname, '../dist/public/index.html'))
+})
+
 const port = parseInt(process.env.PORT ?? String(runtime.config.server.port), 10)
 app.listen(port, () => {
   runtime.logger.info(runtime.i18n.t('logs.serverStarted'), {

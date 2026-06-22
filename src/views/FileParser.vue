@@ -13,7 +13,18 @@ const logInput = ref('')
 const parseResult = ref<any>(null)
 const outputHtml = ref('<div class="empty-hint">上传 log 文件后点击「解析 Log」按钮开始</div>')
 const statsHtml = ref('')
+type StatFilterKey = 'all' | 'hex' | '104' | '101' | 'yc' | 'yx' | 'ctrl' | 'fault' | 'energy' | 'bitstring'
+
+type StatItem = {
+  key: StatFilterKey
+  label: string
+  count: number
+  cls: string
+}
+
+const statsItems = ref<StatItem[]>([])
 const statsVisible = ref(false)
+const activeStatFilter = ref<StatFilterKey>('all')
 const errorMsg = ref('')
 const showError = ref(false)
 const parseStatus = ref('')
@@ -34,6 +45,10 @@ function ptName(type: string, addr: number | string, proto?: string) {
 }
 
 watch(() => db.curTable, () => {
+  if (parseResult.value) renderResult(parseResult.value)
+})
+
+watch(activeStatFilter, () => {
   if (parseResult.value) renderResult(parseResult.value)
 })
 
@@ -107,12 +122,38 @@ function clearAll() {
   dropLabel.value = '点击选择 log 文件，或拖拽到此处'
   dropName.value = ''
   downloadEnabled.value = false
+  statsItems.value = []
   statsVisible.value = false
+  activeStatFilter.value = 'all'
   showError.value = false
   parseStatus.value = ''
   outputHtml.value = '<div class="empty-hint">上传 log 文件后点击「解析 Log」按钮开始</div>'
   const inp = document.getElementById('logFileInput') as HTMLInputElement | null
   if (inp) inp.value = ''
+}
+
+function lineHasFrameType(line: any, types: string[]) {
+  if (line.type !== 'hex') return false
+  return (line.frames ?? []).some((frame: any) => types.includes(frame.type))
+}
+
+function matchesStatFilter(line: any, filterKey: StatFilterKey) {
+  if (filterKey === 'all') return line.type !== 'empty'
+  if (line.type !== 'hex') return false
+  if (filterKey === 'hex') return true
+  if (filterKey === '104') return line.protocol === '104'
+  if (filterKey === '101') return line.protocol === '101'
+  if (filterKey === 'yc') return lineHasFrameType(line, ['yc'])
+  if (filterKey === 'yx') return lineHasFrameType(line, ['yx', 'soe'])
+  if (filterKey === 'ctrl') return lineHasFrameType(line, ['control'])
+  if (filterKey === 'fault') return lineHasFrameType(line, ['fault'])
+  if (filterKey === 'energy') return lineHasFrameType(line, ['energy'])
+  if (filterKey === 'bitstring') return lineHasFrameType(line, ['bitstring'])
+  return true
+}
+
+function toggleStatFilter(filterKey: StatFilterKey) {
+  activeStatFilter.value = activeStatFilter.value === filterKey ? 'all' : filterKey
 }
 
 function renderResult(result: any) {
@@ -154,11 +195,37 @@ function renderResult(result: any) {
     <span class="stat-pill fault">故障 ${nFault}</span>
     <span class="stat-pill energy">电能 ${nEnergy}</span>
     <span class="stat-pill lines">比特串 ${nBitstring}</span>`
+  /*
+  statsItems.value = [
+    { key: 'all', label: '总行', count: lines.length, cls: 'lines' },
+    { key: 'hex', label: '帧', count: nHex, cls: 'proto104' },
+    { key: '104', label: '104×', count: n104, cls: 'proto104' },
+    { key: '101', label: '101×', count: n101, cls: 'proto101' },
+    { key: 'yc', label: '遥测', count: nYC, cls: 'yc' },
+    { key: 'yx', label: '遥信', count: nYX, cls: 'yx' },
+    { key: 'ctrl', label: '遥控', count: nCtrl, cls: 'ctrl' },
+    { key: 'fault', label: '故障', count: nFault, cls: 'fault' },
+    { key: 'energy', label: '电能', count: nEnergy, cls: 'energy' },
+    { key: 'bitstring', label: '比特串', count: nBitstring, cls: 'lines' }
+  ]
+  */
+  statsItems.value = [
+    { key: 'all', label: '\u603b\u884c', count: lines.length, cls: 'lines' },
+    { key: 'hex', label: '\u5e27', count: nHex, cls: 'proto104' },
+    { key: '104', label: '104\u00d7', count: n104, cls: 'proto104' },
+    { key: '101', label: '101\u00d7', count: n101, cls: 'proto101' },
+    { key: 'yc', label: '\u9065\u6d4b', count: nYC, cls: 'yc' },
+    { key: 'yx', label: '\u9065\u4fe1', count: nYX, cls: 'yx' },
+    { key: 'ctrl', label: '\u9065\u63a7', count: nCtrl, cls: 'ctrl' },
+    { key: 'fault', label: '\u6545\u969c', count: nFault, cls: 'fault' },
+    { key: 'energy', label: '\u7535\u80fd', count: nEnergy, cls: 'energy' },
+    { key: 'bitstring', label: '\u6bd4\u7279\u4e32', count: nBitstring, cls: 'lines' }
+  ]
   statsVisible.value = true
 
   const html: string[] = []
   lines.forEach((line, idx) => {
-    if (line.type === 'empty') return
+    if (!matchesStatFilter(line, activeStatFilter.value)) return
     if (line.type === 'debug') {
       html.push(`<div class="debug-line"${filterDebug.value ? ' style="display:none"' : ''}>${highlightTime(esc(line.raw))}</div>`)
       return
@@ -373,6 +440,11 @@ function setDefaultTable(result: any) {
 }
 
 function applyDebugFilter() {
+  if (parseResult.value) {
+    renderResult(parseResult.value)
+    return
+  }
+
   document.querySelectorAll('#output .debug-line').forEach((el: Element) => {
     (el as HTMLElement).style.display = filterDebug.value ? 'none' : ''
   })
@@ -587,7 +659,18 @@ function downloadLog() {
         <span class="text-xs text-slate-400">{{ parseStatus }}</span>
       </div>
 
-      <div class="stats-bar mb-3" :class="{ visible: statsVisible }" v-html="statsHtml" />
+      <div class="stats-bar mb-3" :class="{ visible: statsVisible }">
+        <button
+          v-for="item in statsItems"
+          :key="item.key"
+          type="button"
+          class="stat-pill stat-pill-filter"
+          :class="[item.cls, { active: activeStatFilter === item.key }]"
+          @click.stop.prevent="toggleStatFilter(item.key)"
+        >
+          {{ item.label }} {{ item.count }}
+        </button>
+      </div>
       <div class="error-box" :class="{ show: showError }">{{ errorMsg }}</div>
       <div id="output" class="space-y-0.5" v-html="outputHtml" />
     </div>

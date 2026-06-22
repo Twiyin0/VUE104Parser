@@ -16,7 +16,7 @@ const config = {
   username:        process.env.SSH_USER     ?? 'name',
   password:        process.env.SSH_PASSWORD ?? 'password',
   excludes: ['node_modules/**', '.git/**', '*.tar.gz', '.env*', 'upload/**','old/**','dist/**','.yarn/**','*.log'],
-  afterCMD: ['docker exec 732b5bcff51e /bin/bash -c \"cd /app && yarn build\"'],
+  afterCMD: ['docker exec 104Parser /bin/bash -c \"cd /app && yarn build\"'],
 }
 
 function createArchive(): Promise<string> {
