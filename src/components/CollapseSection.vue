@@ -32,6 +32,7 @@ function toggle() {
     if (bodyRef.value) {
       bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
       requestAnimationFrame(() => {
+        // @ts-ignore
         bodyRef.value.style.maxHeight = '0px'
       })
       bodyRef.value.addEventListener('transitionend', () => {
@@ -54,6 +55,7 @@ function close() {
   if (bodyRef.value) {
     bodyRef.value.style.maxHeight = bodyRef.value.scrollHeight + 'px'
     requestAnimationFrame(() => {
+      // @ts-ignore
       bodyRef.value.style.maxHeight = '0px'
     })
     bodyRef.value.addEventListener('transitionend', () => {

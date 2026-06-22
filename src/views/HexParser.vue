@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import DbBar from '../components/DbBar.vue'
 import CollapseSection from '../components/CollapseSection.vue'
@@ -31,6 +31,40 @@ const eventLog    = ref('<span class="log-empty">等待解析…</span>')
 
 const counts = ref({ yc: 0, yx: 0, energy: 0, ctrl: 0, param: 0, link101: 0, events: 0 })
 const sectionOpen = ref({ yc: false, yx: false, energy: false, ctrl: false, param: false, link101: false, events: false })
+
+function refreshAncestorHeights(fromEl: HTMLElement | null) {
+  let current = fromEl?.parentElement ?? null
+  while (current) {
+    if (current.classList.contains('cs-body')) {
+      current.style.maxHeight = `${current.scrollHeight}px`
+    }
+    current = current.parentElement
+  }
+}
+
+function toggleBlockById(id: string) {
+  const card = document.getElementById(id)
+  if (!card) return
+
+  const body = card.querySelector<HTMLElement>(':scope > .fault-body')
+  if (!body) return
+
+  const collapsed = card.classList.toggle('collapsed')
+  body.style.maxHeight = collapsed ? '0px' : `${body.scrollHeight}px`
+  body.style.opacity = collapsed ? '0.05' : '1'
+
+  requestAnimationFrame(() => refreshAncestorHeights(card))
+}
+
+onMounted(() => {
+  ;(window as any).toggleBlock = toggleBlockById
+})
+
+onBeforeUnmount(() => {
+  if ((window as any).toggleBlock === toggleBlockById) {
+    delete (window as any).toggleBlock
+  }
+})
 
 function syncSectionsWithData() {
   if (counts.value.yc > 0 && !sectionOpen.value.yc) secYc.value?.open()

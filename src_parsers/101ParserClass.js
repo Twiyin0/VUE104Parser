@@ -74,6 +74,18 @@ class Parser101 {
         return `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(min)}:${pad2(sec)}.${pad3(ms)}${dowStr}`;
     }
 
+    static parseCP24Time2a(buf, offset) {
+        if (buf.length < offset + 3) throw new Error('Insufficient buffer for CP24Time2a');
+        const msRaw = buf.readUInt16LE(offset);
+        const minByte = buf.readUInt8(offset + 2);
+        const ms = msRaw % 1000;
+        const sec = Math.floor(msRaw / 1000);
+        const min = minByte & 0x3F;
+        const pad2 = n => String(n).padStart(2, '0');
+        const pad3 = n => String(n).padStart(3, '0');
+        return `${pad2(min)}:${pad2(sec)}.${pad3(ms)}`;
+    }
+
     static _readUInt32LE(buf, off) { return buf.readUInt32LE(off); }
     static _sum8(buf) { let sum = 0; for (const b of buf) sum = (sum + b) & 0xFF; return sum; }
     static _resultDesc(code, map) { return map[code] ?? `未知(${code})`; }
@@ -280,6 +292,46 @@ class Parser101 {
     }
 
     // ── 遥测 TI=9/11/13 [D-02] ──
+    static parseBitstring(ti, asdu, offset, cot, addr, sq, num) {
+        const results = [];
+        const hasTime = (ti === 7);
+
+        const parseOne = (objAddr) => {
+            const value = asdu.readUInt32LE(offset); offset += 4;
+            let time = null;
+            if (hasTime) {
+                time = Parser101.parseCP24Time2a(asdu, offset);
+                offset += 3;
+            }
+            return {
+                addr: objAddr,
+                value,
+                valueHex: `0x${value.toString(16).padStart(8, '0')}`,
+                bits: value.toString(2).padStart(32, '0'),
+                time,
+            };
+        };
+
+        if (sq === 0) {
+            for (let i = 0; i < num; i++) {
+                const need = 2 + 4 + (hasTime ? 3 : 0);
+                if (asdu.length - offset < need) throw new Error('Bitstring item too short');
+                const objAddr = asdu.readUInt16LE(offset); offset += 2;
+                results.push({ slot: i + 1, ...parseOne(objAddr) });
+            }
+        } else {
+            if (asdu.length - offset < 2) throw new Error('Bitstring base addr missing');
+            const baseAddr = asdu.readUInt16LE(offset); offset += 2;
+            for (let j = 0; j < num; j++) {
+                const need = 4 + (hasTime ? 3 : 0);
+                if (asdu.length - offset < need) throw new Error('Bitstring seq item too short');
+                results.push({ slot: j + 1, ...parseOne(baseAddr + j) });
+            }
+        }
+
+        return { type: 'bitstring', hasTime, data: results };
+    }
+
     static parseYC(ti, asdu, offset, cot, addr, sq, num) {
         const results   = [];
         const isFloat   = (ti === 13);
@@ -932,6 +984,8 @@ class Parser101 {
             switch (ti) {
                 case 1: case 3:
                     result = Parser101.parseYX(ti, asduBuf, offset, cotRaw, addr, sq, num); break;
+                case 5: case 7:
+                    result = Parser101.parseBitstring(ti, asduBuf, offset, cotRaw, addr, sq, num); break;
                 case 9: case 11: case 13:
                     result = Parser101.parseYC(ti, asduBuf, offset, cotRaw, addr, sq, num); break;
                 case 30: case 31:

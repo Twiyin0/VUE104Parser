@@ -14,7 +14,7 @@ auth:
 
 # 站点信息（显示在页面底部 footer）
 site:
-  copyright: "© 2025 Vue104Parser by Twiyin0"
+  copyright: "© 2026 Vue104Parser by Twiyin0"
   icp: ""                # ICP 备案号，如 "京ICP备XXXXXXXX号"
   icp_url: "https://beian.miit.gov.cn/"
   police: ""             # 公安备案号，如 "京公网安备XXXXXXXXXX号"

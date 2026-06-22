@@ -185,3 +185,91 @@ SSH_PASSWORD=password
 PORT=33104
 REMOTE_DIR=remote server directory
 ```
+
+
+```mermaid
+flowchart TB
+  U[用户 / 浏览器]
+
+  subgraph FE[前端 Vue 3]
+    MAIN[src/main.ts]
+    APP[src/App.vue]
+    ROUTER[Vue Router]
+    HEX[HexParser.vue\n实时报文解析]
+    FILE[FileParser.vue\nLog 文件解析]
+    DBBAR[DbBar + Pinia]
+    DBSTORE[src/stores/db.ts\n点表映射]
+    THEME[useTheme / ThemeToggle / ScrollToTop]
+    HTMLUTIL[src/composables/useHtmlUtils.ts\n格式化/标签/地址显示]
+  end
+
+  subgraph EXT[外部/本地数据]
+    SQLITE[点表数据库文件\nSQLite/.db]
+    CFG[config.yml]
+    STD[public/standard\n规范文档]
+  end
+
+  subgraph BE[后端 Node.js + Express]
+    SERVER[server/server.ts\n静态资源 + API入口]
+    API[server/routes/api.ts\n/api/v1/*]
+    PARSE[server/parseService.ts\n统一解析服务]
+    DETECT[server/protocolDetector.ts\n101/104协议识别]
+    CONF[server/config.ts\n读取YAML配置]
+  end
+
+  subgraph PARSER[协议解析核心]
+    P104[src_parsers/104ParserClass.js]
+    P101[src_parsers/101ParserClass.js]
+  end
+
+  subgraph OUT[输出结果]
+    JSON1[解析结果 JSON]
+    UI[表格/事件卡片/统计]
+    FOOTER[站点配置/页脚信息]
+  end
+
+  U --> MAIN
+  MAIN --> APP
+  MAIN --> ROUTER
+  APP --> HEX
+  APP --> FILE
+  APP --> THEME
+  APP -->|fetch /api/v1/config| API
+
+  HEX -->|POST /parse| SERVER
+  FILE -->|POST /parseLog| SERVER
+  DBBAR --> DBSTORE
+  HEX --> DBSTORE
+  FILE --> DBSTORE
+  DBSTORE -->|loadDb + 映射点名| SQLITE
+  HEX --> HTMLUTIL
+  FILE --> HTMLUTIL
+
+  SERVER --> API
+  SERVER -->|静态托管 dist/public| U
+  SERVER -->|/parse| PARSE
+  SERVER -->|/parseLog| PARSE
+  API -->|/parse /parse/101 /parse/104 /parseLog| PARSE
+  API -->|/detect| DETECT
+  API -->|/config| CONF
+  CONF --> CFG
+
+  PARSE --> DETECT
+  PARSE -->|IEC 104| P104
+  PARSE -->|IEC 101| P101
+
+  P104 --> JSON1
+  P101 --> JSON1
+  PARSE --> JSON1
+  JSON1 --> HEX
+  JSON1 --> FILE
+  JSON1 --> UI
+
+  CONF --> FOOTER
+  FOOTER --> APP
+
+  STD -. 规范参考 .-> P104
+  STD -. 规范参考 .-> P101
+  STD -. 规范参考 .-> HEX
+  STD -. 规范参考 .-> FILE
+```

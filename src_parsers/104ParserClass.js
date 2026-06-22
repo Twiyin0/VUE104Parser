@@ -82,6 +82,19 @@ class Parser104 {
         return `${year}-${pad2(month)}-${pad2(day)} ${pad2(hour)}:${pad2(min)}:${pad2(sec)}.${pad3(ms)}${dowStr}`;
     }
 
+    /** 解析 CP24Time2a（3字节二进制时间） */
+    static parseCP24Time2a(buf, offset) {
+        if (buf.length < offset + 3) throw new Error('Insufficient buffer for CP24Time2a');
+        const msRaw = buf.readUInt16LE(offset);
+        const minByte = buf.readUInt8(offset + 2);
+        const ms = msRaw % 1000;
+        const sec = Math.floor(msRaw / 1000);
+        const min = minByte & 0x3F;
+        const pad2 = n => String(n).padStart(2, '0');
+        const pad3 = n => String(n).padStart(3, '0');
+        return `${pad2(min)}:${pad2(sec)}.${pad3(ms)}`;
+    }
+
     /** 解析 TLV 值（附录D） */
     static parseTLVValue(tag, dataBuf) {
         const tagMap = {
@@ -213,6 +226,79 @@ class Parser104 {
             }
         }
         return { type: 'soe', data: results };
+    }
+
+    static parseBitstring(ti, asdu, offset, cot, addr, sq, num) {
+        const results = [];
+        const hasTime = (ti === 7);
+
+        const parseOne = (objAddr) => {
+            const value = asdu.readUInt32LE(offset); offset += 4;
+            let time = null;
+            if (hasTime) {
+                time = Parser104.parseCP24Time2a(asdu, offset);
+                offset += 3;
+            }
+            return {
+                addr: objAddr,
+                value,
+                valueHex: `0x${value.toString(16).padStart(8, '0')}`,
+                bits: value.toString(2).padStart(32, '0'),
+                time,
+            };
+        };
+
+        if (sq === 0) {
+            for (let i = 0; i < num; i++) {
+                const need = 3 + 4 + (hasTime ? 3 : 0);
+                if (asdu.length - offset < need) throw new Error('Bitstring item too short');
+                const objAddr = asdu.readUInt16LE(offset) | (asdu.readUInt8(offset + 2) << 16); offset += 3;
+                results.push({ slot: i + 1, ...parseOne(objAddr) });
+            }
+        } else {
+            if (asdu.length - offset < 3) throw new Error('Bitstring base addr missing');
+            const baseAddr = asdu.readUInt16LE(offset) | (asdu.readUInt8(offset + 2) << 16); offset += 3;
+            for (let j = 0; j < num; j++) {
+                const need = 4 + (hasTime ? 3 : 0);
+                if (asdu.length - offset < need) throw new Error('Bitstring seq item too short');
+                results.push({ slot: j + 1, ...parseOne(baseAddr + j) });
+            }
+        }
+
+        return { type: 'bitstring', hasTime, data: results };
+    }
+
+    static parseTestCmd(asdu, offset, cot, addr) {
+        if (asdu.length - offset < 5) return { type: 'test_cmd', cot, addr, fbp: null };
+        offset += 3;
+        const fbp = asdu.readUInt16LE(offset);
+        const cause = cot & 0x3F;
+        const desc = cause === 6 ? '测试命令' : cause === 7 ? '测试命令确认' : `COT=${cot}`;
+        return {
+            type: 'test_cmd',
+            cot,
+            addr,
+            fbp,
+            fbpHex: `0x${fbp.toString(16).padStart(4, '0')}`,
+            fbpValid: fbp === 0x55AA,
+            desc,
+        };
+    }
+
+    static parseResetProcess(asdu, offset, cot, addr) {
+        if (asdu.length - offset < 4) return { type: 'reset_process', cot, addr, qrp: null };
+        offset += 3;
+        const qrp = asdu.readUInt8(offset);
+        const cause = cot & 0x3F;
+        const desc = cause === 6 ? '复位进程命令' : cause === 7 ? '复位进程确认' : `COT=${cot}`;
+        return {
+            type: 'reset_process',
+            cot,
+            addr,
+            qrp,
+            qrpDesc: qrp === 1 ? '进程的总复位' : `QRP=${qrp}`,
+            desc,
+        };
     }
 
     // [FIX-07] 解析 QOC；修正 "faild" 拼写；P/N=1 时标注否定确认
@@ -1075,6 +1161,9 @@ class Parser104 {
                 case 1:
                 case 3:
                     return { ...Parser104.parseYX(ti, asdu, offset, cotRaw, addr, sq, num), pn, test, cotDesc };
+                case 5:
+                case 7:
+                    return { ...Parser104.parseBitstring(ti, asdu, offset, cotRaw, addr, sq, num), pn, test, cotDesc };
                 case 9:
                 case 11:
                 case 13:
@@ -1095,6 +1184,10 @@ class Parser104 {
                     return { ...Parser104.parseEnergyCall(asdu, offset, cotRaw, addr), pn, test, cotDesc };
                 case 103:                        // [FIX-10]
                     return { ...Parser104.parseClockSync(asdu, offset, cotRaw, addr), pn, test, cotDesc };
+                case 104:
+                    return { ...Parser104.parseTestCmd(asdu, offset, cotRaw, addr), pn, test, cotDesc };
+                case 105:
+                    return { ...Parser104.parseResetProcess(asdu, offset, cotRaw, addr), pn, test, cotDesc };
                 case 200:
                 case 201:
                 case 202:
