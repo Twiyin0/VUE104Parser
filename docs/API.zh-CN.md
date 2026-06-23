@@ -27,6 +27,11 @@ English version: [API.md](API.md)
 ```json
 {
   "apiVersion": "2.0.0",
+  "admin": {
+    "username": "admin",
+    "authenticated": false,
+    "expiresAt": null
+  },
   "locale": {
     "default": "zh-cn",
     "fallback": "en",
@@ -35,7 +40,7 @@ English version: [API.md](API.md)
   },
   "logger": {
     "level": 3,
-    "file": "data/log/20260622_1.log",
+    "file": "data/log/20260623_1.log",
     "exposeDebugApi": true
   },
   "theme": {
@@ -46,6 +51,39 @@ English version: [API.md](API.md)
   "plugins": []
 }
 ```
+
+如果请求中携带有效的管理员 token，`admin.authenticated` 会变为 `true`。
+
+## 管理员鉴权
+
+### `POST /api/v1/system/admin/login`
+
+管理员登录接口，用于开启插件管理权限。
+
+请求示例：
+
+```json
+{
+  "username": "admin",
+  "password": "admin"
+}
+```
+
+响应示例：
+
+```json
+{
+  "ok": true,
+  "token": "generated-admin-token",
+  "username": "admin",
+  "expiresAt": 1780000000000
+}
+```
+
+之后可在以下任一请求头中携带 token 调用管理员接口：
+
+- `X-Admin-Token: <token>`
+- `Authorization: Bearer <token>`
 
 ## 解析接口
 
@@ -83,9 +121,13 @@ English version: [API.md](API.md)
 
 返回运行时插件描述、当前启用状态以及当前插件配置值。
 
+这个接口是公开接口，普通页面上的只读插件中心就使用它来展示信息。
+
 ### `POST /api/v1/system/plugins/:id`
 
 在运行时启用或禁用指定插件。
+
+需要管理员 token。
 
 请求示例：
 
@@ -98,6 +140,8 @@ English version: [API.md](API.md)
 ### `POST /api/v1/system/plugins/:id/config`
 
 在运行时更新插件配置。
+
+需要管理员 token。
 
 请求示例：
 
@@ -118,7 +162,7 @@ English version: [API.md](API.md)
 
 ### `POST /api/v1/system/logs/client`
 
-将前端日志镜像写入后端日志系统。
+将前端日志镜像写入后端 logger。
 
 请求示例：
 
@@ -143,4 +187,4 @@ English version: [API.md](API.md)
 - `POST /parse`
 - `POST /parseLog`
 
-它们底层仍然调用同一套运行时解析能力，在前端完全迁移到 `/api/v1` 之前可继续使用。
+它们底层仍然调用同一套运行时解析能力，在前端完全迁移到 `/api/v1` 之前可以继续使用。

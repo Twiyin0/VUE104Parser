@@ -6,7 +6,7 @@ import { useI18n } from '../composables/useI18n'
 import AppIcon from './AppIcon.vue'
 
 const runtime = useRuntimeStore()
-const { plugins, pluginDrawerOpen } = storeToRefs(runtime)
+const { plugins, pluginDrawerOpen, canManagePlugins } = storeToRefs(runtime)
 const { t } = useI18n()
 
 const drafts = reactive<Record<string, Record<string, boolean | number | string>>>({})
@@ -65,13 +65,31 @@ function setNotice(pluginId: string, message: string) {
   noticeTimers.set(pluginId, timer)
 }
 
+async function togglePlugin(pluginId: string, enabled: boolean) {
+  if (!canManagePlugins.value) return
+
+  saving[pluginId] = true
+  errors[pluginId] = ''
+  notices[pluginId] = ''
+  try {
+    await runtime.setPluginEnabled(pluginId, enabled)
+    setNotice(pluginId, t('plugins.toggleSaved', 'Plugin state updated.'))
+  } catch (error) {
+    errors[pluginId] = error instanceof Error ? error.message : String(error)
+  } finally {
+    saving[pluginId] = false
+  }
+}
+
 async function savePlugin(pluginId: string) {
+  if (!canManagePlugins.value) return
+
   saving[pluginId] = true
   errors[pluginId] = ''
   notices[pluginId] = ''
   try {
     await runtime.savePluginConfig(pluginId, drafts[pluginId] ?? {})
-    setNotice(pluginId, t('plugins.saved', '已保存'))
+    setNotice(pluginId, t('plugins.saved', 'Saved'))
   } catch (error) {
     errors[pluginId] = error instanceof Error ? error.message : String(error)
   } finally {
@@ -88,6 +106,16 @@ async function savePlugin(pluginId: string) {
           <div>
             <h2>{{ t('plugins.title', 'Plugin Center') }}</h2>
             <p>{{ t('plugins.description', 'Runtime plugins for frontend and backend.') }}</p>
+            <div class="plugin-mode-banner" :class="{ editable: canManagePlugins }">
+              <strong>{{ canManagePlugins ? t('plugins.editable', 'Admin mode') : t('plugins.readonly', 'Read-only mode') }}</strong>
+              <span>
+                {{
+                  canManagePlugins
+                    ? t('plugins.editableDescription', 'Changes are saved immediately and applied to the current runtime.')
+                    : t('plugins.readonlyDescription', 'Browse plugin metadata here. Sign in at /admin to change status or settings.')
+                }}
+              </span>
+            </div>
           </div>
           <button class="app-icon-btn" @click="pluginDrawerOpen = false">
             <AppIcon name="xmark" size="1rem" />
@@ -124,7 +152,8 @@ async function savePlugin(pluginId: string) {
                   <input
                     :checked="plugin.enabled"
                     type="checkbox"
-                    @change="runtime.setPluginEnabled(plugin.id, !plugin.enabled)"
+                    :disabled="!canManagePlugins || saving[plugin.id]"
+                    @change="togglePlugin(plugin.id, !plugin.enabled)"
                   />
                   <span class="plugin-switch-track">
                     <span class="plugin-switch-thumb"></span>
@@ -132,13 +161,10 @@ async function savePlugin(pluginId: string) {
                 </label>
               </div>
             </div>
+
             <p class="plugin-card-desc">{{ plugin.description }}</p>
 
-            <div
-              v-if="hasConfig(plugin)"
-              class="plugin-config"
-              :class="{ open: configOpen[plugin.id] }"
-            >
+            <div v-if="hasConfig(plugin)" class="plugin-config" :class="{ open: configOpen[plugin.id] }">
               <button class="plugin-config-togglebar" type="button" @click="toggleConfig(plugin.id)">
                 <span class="plugin-config-title">{{ t('plugins.configTitle', 'Plugin Settings') }}</span>
                 <span class="plugin-config-chevron" :class="{ open: configOpen[plugin.id] }">
@@ -157,6 +183,7 @@ async function savePlugin(pluginId: string) {
                     <input
                       v-if="field.type === 'string'"
                       class="app-input plugin-config-input"
+                      :disabled="!canManagePlugins"
                       :placeholder="field.placeholder ?? ''"
                       :value="String(fieldValue(plugin.id, field.key) ?? '')"
                       @input="updateField(plugin.id, field.key, ($event.target as HTMLInputElement).value)"
@@ -165,6 +192,7 @@ async function savePlugin(pluginId: string) {
                       v-else-if="field.type === 'number'"
                       class="app-input plugin-config-input"
                       type="number"
+                      :disabled="!canManagePlugins"
                       :min="field.min"
                       :max="field.max"
                       :step="field.step ?? 1"
@@ -174,6 +202,7 @@ async function savePlugin(pluginId: string) {
                     <span v-else class="plugin-config-toggle">
                       <input
                         type="checkbox"
+                        :disabled="!canManagePlugins"
                         :checked="Boolean(fieldValue(plugin.id, field.key))"
                         @change="updateField(plugin.id, field.key, ($event.target as HTMLInputElement).checked)"
                       />
@@ -183,7 +212,7 @@ async function savePlugin(pluginId: string) {
                 </div>
 
                 <div class="plugin-config-actions">
-                  <button class="app-secondary-btn" :disabled="saving[plugin.id]" @click="savePlugin(plugin.id)">
+                  <button class="app-secondary-btn" :disabled="saving[plugin.id] || !canManagePlugins" @click="savePlugin(plugin.id)">
                     {{ saving[plugin.id] ? t('plugins.saving', 'Saving...') : t('plugins.save', 'Save Settings') }}
                   </button>
                   <span v-if="notices[plugin.id]" class="plugin-config-success">{{ notices[plugin.id] }}</span>

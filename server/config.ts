@@ -17,6 +17,10 @@ export interface AppConfig {
   server: { port: number }
   cors: { enabled: boolean; origins: string | string[] }
   auth: { enabled: boolean; keys: string[] }
+  admin: {
+    username: string
+    password: string
+  }
   locale: {
     default: string
     fallback: string
@@ -44,6 +48,10 @@ const defaults: AppConfig = {
   server: { port: 33104 },
   cors: { enabled: true, origins: '*' },
   auth: { enabled: false, keys: [] },
+  admin: {
+    username: 'admin',
+    password: 'admin',
+  },
   locale: {
     default: 'zh-cn',
     fallback: 'en',

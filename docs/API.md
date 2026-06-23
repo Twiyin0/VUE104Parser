@@ -27,6 +27,11 @@ Response shape:
 ```json
 {
   "apiVersion": "2.0.0",
+  "admin": {
+    "username": "admin",
+    "authenticated": false,
+    "expiresAt": null
+  },
   "locale": {
     "default": "zh-cn",
     "fallback": "en",
@@ -35,7 +40,7 @@ Response shape:
   },
   "logger": {
     "level": 3,
-    "file": "data/log/20260622_1.log",
+    "file": "data/log/20260623_1.log",
     "exposeDebugApi": true
   },
   "theme": {
@@ -46,6 +51,39 @@ Response shape:
   "plugins": []
 }
 ```
+
+When the request contains a valid admin token, `admin.authenticated` becomes `true`.
+
+## Admin authentication
+
+### `POST /api/v1/system/admin/login`
+
+Sign in to enable plugin management.
+
+Request:
+
+```json
+{
+  "username": "admin",
+  "password": "admin"
+}
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "token": "generated-admin-token",
+  "username": "admin",
+  "expiresAt": 1780000000000
+}
+```
+
+Use the returned token in one of these headers for admin-only endpoints:
+
+- `X-Admin-Token: <token>`
+- `Authorization: Bearer <token>`
 
 ## Parser endpoints
 
@@ -83,9 +121,13 @@ Parse text logs containing `Tx(...)` / `Rx(...)` prefixes.
 
 List runtime plugin descriptors, current enabled state, and current plugin config values.
 
+This endpoint is public and is used by the read-only plugin center on normal pages.
+
 ### `POST /api/v1/system/plugins/:id`
 
 Enable or disable a plugin at runtime.
+
+Admin token required.
 
 Request:
 
@@ -98,6 +140,8 @@ Request:
 ### `POST /api/v1/system/plugins/:id/config`
 
 Update plugin config values at runtime.
+
+Admin token required.
 
 Request:
 

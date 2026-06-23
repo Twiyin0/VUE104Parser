@@ -1,6 +1,7 @@
 import { config } from './config'
 import { I18nService } from './core/i18n'
 import { backendI18n } from './core/backend-i18n'
+import { AdminAuthService } from './core/admin-auth'
 import { BackendPluginHost } from './core/backend-plugin-host'
 import { InternalApiRegistry } from './core/internal-api'
 import { LoggerService } from './core/logger'
@@ -12,12 +13,14 @@ export interface AppRuntime {
   config: typeof config
   i18n: I18nService
   logger: LoggerService
+  adminAuth: AdminAuthService
   internalApis: InternalApiRegistry
   plugins: PluginManager
   parser: typeof parserService
 }
 
 const logger = new LoggerService(config.logger.dir, config.logger.level)
+const adminAuth = new AdminAuthService()
 const internalApis = new InternalApiRegistry()
 const plugins = new PluginManager(config.plugins.stateFile, config.plugins.enabled, builtinPlugins)
 
@@ -32,6 +35,7 @@ export const runtime: AppRuntime = {
   config,
   i18n: backendI18n,
   logger,
+  adminAuth,
   internalApis,
   plugins,
   parser: parserService,

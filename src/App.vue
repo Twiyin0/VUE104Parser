@@ -11,7 +11,7 @@ import { useI18n } from './composables/useI18n'
 
 const runtime = useRuntimeStore()
 const route = useRoute()
-const { ready, pluginDrawerOpen, logDrawerOpen, site, logViewerEnabled } = storeToRefs(runtime)
+const { ready, pluginDrawerOpen, logDrawerOpen, site, logViewerEnabled, canManagePlugins } = storeToRefs(runtime)
 const { t } = useI18n()
 
 onMounted(() => {
@@ -34,10 +34,15 @@ onMounted(() => {
         <RouterLink to="/fileParser" class="app-nav-link" :class="{ active: route.path === '/fileParser' }">
           {{ t('app.navLog', 'Log Parser') }}
         </RouterLink>
+        <RouterLink to="/admin" class="app-nav-link" :class="{ active: route.path === '/admin' }">
+          {{ t('app.navAdmin', 'Admin') }}
+        </RouterLink>
       </nav>
 
       <div class="app-actions">
-        <button class="app-secondary-btn" @click="pluginDrawerOpen = true">{{ t('app.plugins', 'Plugins') }}</button>
+        <button class="app-secondary-btn" @click="pluginDrawerOpen = true">
+          {{ canManagePlugins ? t('app.pluginManage', 'Manage Plugins') : t('app.plugins', 'Plugins') }}
+        </button>
         <button v-if="logViewerEnabled" class="app-secondary-btn" @click="logDrawerOpen = true">{{ t('app.logs', 'Debug Logs') }}</button>
         <ThemeToggle />
       </div>

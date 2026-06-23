@@ -1,6 +1,6 @@
 # Vue104Parser
 
-IEC 60870-5-104 / DL/T634.5101-2002 parser workstation with a refactored runtime core, frontend/backend i18n, plugin scaffolding, theme system, and structured logging.
+IEC 60870-5-104 / DL/T634.5101-2002 parser workstation with a refactored runtime core, frontend/backend i18n, plugin scaffolding, theme system, admin-gated plugin management, and structured logging.
 
 中文说明: [README.zh-CN.md](README.zh-CN.md)
 
@@ -10,8 +10,8 @@ IEC 60870-5-104 / DL/T634.5101-2002 parser workstation with a refactored runtime
 - Frontend and backend i18n with English fallback.
 - Runtime plugin registry for both frontend and backend capabilities.
 - Theme system prepared for plugin-contributed theme presets.
+- Read-only public plugin center plus admin-editable plugin center at `/admin`.
 - File-based logger with `error/warn/info/debug` levels and debug log viewer API.
-- Existing parser compatibility preserved through `src_parsers/101ParserClass.js` and `src_parsers/104ParserClass.js`.
 
 ## Architecture
 
@@ -24,6 +24,7 @@ flowchart TB
     RuntimeStore[Runtime Store]
     Hex[Hex Parser View]
     Log[File Parser View]
+    Admin[Admin View]
     PluginDrawer[Plugin Center]
     LogDrawer[Debug Log Drawer]
     Theme[Theme Runtime]
@@ -34,6 +35,7 @@ flowchart TB
     Server[Express Server]
     Api[API Router]
     Runtime[Backend Runtime]
+    AdminAuth[Admin Auth Service]
     ParserService[Parser Service]
     PluginManager[Plugin Manager]
     Logger[Logger Service]
@@ -63,15 +65,19 @@ flowchart TB
   RuntimeStore --> Db
   App --> Hex
   App --> Log
+  App --> Admin
 
   RuntimeStore -->|GET /api/v1/system/bootstrap| Api
-  RuntimeStore -->|GET /api/v1/system/logs| Api
+  RuntimeStore -->|POST /api/v1/system/admin/login| Api
   RuntimeStore -->|POST /api/v1/system/plugins/:id| Api
+  RuntimeStore -->|POST /api/v1/system/plugins/:id/config| Api
+  RuntimeStore -->|GET /api/v1/system/logs| Api
   Hex -->|POST /parse| Server
   Log -->|POST /parseLog| Server
 
   Server --> Api
   Api --> Runtime
+  Runtime --> AdminAuth
   Runtime --> ParserService
   Runtime --> PluginManager
   Runtime --> Logger
@@ -96,7 +102,7 @@ VUE104Parser/
 ├─ config.yml
 ├─ public/
 │  ├─ i18n/zh-cn.yml
-│  ├─ logo/
+│  ├─ iconLib/
 │  └─ standard/
 ├─ server/
 │  ├─ core/
@@ -119,11 +125,13 @@ VUE104Parser/
 │  ├─ App.vue
 │  └─ main.ts
 ├─ src_parsers/
-│  ├─ 101ParserClass.js
-│  └─ 104ParserClass.js
+│  ├─ 101ParserClass.ts
+│  └─ 104ParserClass.ts
 └─ docs/
    ├─ API.md
-   └─ PLUGIN_SYSTEM.md
+   ├─ API.zh-CN.md
+   ├─ PLUGIN_SYSTEM.md
+   └─ PLUGIN_SYSTEM.zh-CN.md
 ```
 
 ## Runtime Configuration
@@ -133,6 +141,10 @@ VUE104Parser/
 ```yaml
 server:
   port: 33104
+
+admin:
+  username: "admin"
+  password: "admin"
 
 locale:
   default: "zh-cn"
@@ -160,6 +172,8 @@ theme:
   defaultTheme: "theme-ocean"
 ```
 
+Change the default admin password before exposing the service beyond trusted local use.
+
 ## Development
 
 ```bash
@@ -182,7 +196,7 @@ Log files are stored in `data/log/yyyyMMdd_n.log`. Each restart creates a new in
 Log line format:
 
 ```text
-[backend][info]2026-06-22 12:00:00: parsed protocol payload {"route":"/parse","count":3}
+[backend][info]2026-06-23 12:00:00: parsed protocol payload {"route":"/parse","count":3}
 ```
 
 Frontend can view current logs through the debug log drawer and the `/api/v1/system/logs` endpoint.
@@ -190,12 +204,12 @@ Frontend can view current logs through the debug log drawer and the `/api/v1/sys
 ## Documentation
 
 - [API documentation](docs/API.md)
-- [API 文档](docs/API.zh-CN.md)
+- [API 中文文档](docs/API.zh-CN.md)
 - [Plugin system documentation](docs/PLUGIN_SYSTEM.md)
 - [插件系统文档](docs/PLUGIN_SYSTEM.zh-CN.md)
 
 ## Current Migration Notes
 
-- Backend runtime, plugin registry, logger, and i18n infrastructure are already migrated.
-- Frontend shell, theme runtime, plugin drawer, and debug log drawer are migrated.
+- Backend runtime, plugin registry, logger, admin auth, and i18n infrastructure are migrated.
+- Frontend shell, theme runtime, plugin drawer, debug log drawer, and admin view are migrated.
 - Existing parser pages still contain legacy rendering code and should be progressively migrated to the new i18n/runtime style in later iterations.

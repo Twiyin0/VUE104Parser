@@ -4,18 +4,19 @@
 
 ## Design Goals
 
-The plugin system follows a lightweight runtime model inspired by Koishi's service-oriented design:
+The plugin system is built around a lightweight runtime model inspired by Koishi's service-oriented approach:
 
-- core services are initialized once in a shared runtime
-- plugins describe capabilities instead of hard-coding UI branches everywhere
+- shared backend services are initialized once and exposed through a stable runtime
+- plugins describe capabilities instead of scattering feature branches across the UI
 - frontend and backend plugins can evolve independently
 - internal APIs are registered centrally for future extension points
+- runtime configuration can be changed without restarting the whole app
 
 ## Runtime Model
 
 ### Backend
 
-Backend plugins are described in `server/plugins/builtin.ts` and managed by `server/core/plugin-manager.ts`.
+Backend plugins are declared in `server/plugins/builtin.ts` and managed by `server/core/plugin-manager.ts`.
 
 Each plugin descriptor contains:
 
@@ -62,9 +63,32 @@ They can:
 
 - expose feature flags
 - expose theme ids
-- be enabled or disabled from the plugin center
+- be listed in the plugin center
 - render backend-declared config fields in the plugin center
-- save config changes back to the runtime without a restart
+- apply runtime changes immediately after saving
+
+## Plugin Center Permissions
+
+The plugin center now has two modes:
+
+- public mode: available from `/` and `/fileParser`, read-only
+- admin mode: available after signing in from `/admin`, editable
+
+Behavior:
+
+- public users can view plugin metadata, status, and config schema
+- public users cannot change plugin state or save plugin config
+- admins sign in with username and password from `config.yml`
+- the default credentials are `admin / admin`
+- after login, plugin state and config changes take effect immediately in the current runtime
+
+Relevant runtime files:
+
+- `server/core/admin-auth.ts`
+- `server/routes/api.ts`
+- `src/stores/runtime.ts`
+- `src/components/PluginDrawer.vue`
+- `src/views/AdminView.vue`
 
 ## Current Built-in Plugins
 
@@ -92,18 +116,18 @@ Future backend plugins should register against this registry instead of importin
 
 ## Example Backend Plugin
 
-The repository now includes a runnable backend example plugin in `server/plugins/log-cleaner.ts`.
+The repository includes a runnable backend example plugin in `server/plugins/log-cleaner.ts`.
 
 Behavior:
 
 - disabled by default
-- when enabled, it immediately scans `config.logger.dir`
-- it skips the current active log file
-- it removes `.log` files older than 14 days
-- it repeats the cleanup every 6 hours
-- its `keepDays` and `intervalHours` values can be changed directly from the frontend plugin center
+- immediately scans `config.logger.dir` after being enabled
+- skips the current active log file
+- removes `.log` files older than 14 days
+- repeats cleanup every 6 hours
+- `keepDays` and `intervalHours` can be configured from the frontend plugin center
 
-Enable it by adding this plugin id to `config.yml`:
+Enable it by default in `config.yml`:
 
 ```yml
 plugins:
@@ -111,7 +135,7 @@ plugins:
     - "example.log-cleaner"
 ```
 
-You can also toggle it from the plugin API/UI, and the backend host will start or stop the timer without a restart.
+You can also toggle it from the plugin API or the admin plugin center, and the backend host will start or stop the timer without a restart.
 
 ## Recommended Plugin Folder Layout
 
@@ -119,7 +143,7 @@ For future third-party or local plugins, use a structure like:
 
 ```text
 plugins/
-└─ my-plugin/
+├─ my-plugin/
    ├─ plugin.json
    ├─ backend.ts
    ├─ frontend.ts
@@ -144,12 +168,13 @@ Suggested `plugin.json`:
 
 ## Development Notes
 
-1. Prefer registering services through the runtime instead of importing global singletons everywhere.
+1. Register services through the runtime instead of importing global singletons everywhere.
 2. Keep user-facing copy in i18n files, not inline in `.ts` or `.vue`.
 3. If a plugin adds a theme, declare a `themeId` and let the frontend theme registry own the actual CSS variables.
-4. If a plugin needs logs, use the shared logger API so the output format remains consistent.
-5. If a backend plugin needs runtime settings, declare `backend.configFields` and let the plugin center render the form instead of hard-coding a separate settings page.
+4. If a plugin needs logs, use the shared logger API so the output format stays consistent.
+5. If a backend plugin needs runtime settings, declare `backend.configFields` and let the plugin center render the form.
+6. If a plugin changes frontend theme variables or feature flags, update runtime state immediately after save so the UI reflects the change without a reload.
 
 ## Next Iteration
 
-The current implementation is a stable scaffold. The next migration step is to move parser page rendering logic into plugin-friendly view models and component slots, rather than large inline HTML strings.
+The current implementation is a stable scaffold. The next migration step is to move more parser-page rendering logic into plugin-friendly view models and component slots instead of large inline HTML strings.

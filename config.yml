@@ -12,6 +12,10 @@ auth:
   keys:
     - "your-secret-key-here"
 
+admin:
+  username: "admin"
+  password: "admin"
+
 locale:
   default: "zh-cn"
   fallback: "en"

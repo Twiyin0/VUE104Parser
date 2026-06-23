@@ -11,15 +11,25 @@ const PUBLIC_PATHS = new Set([
   '/types',
   '/config',
   '/system/bootstrap',
+  '/system/admin/login',
 ])
+
+function readBearerToken(req: Request) {
+  const authorization = req.headers.authorization
+  if (authorization?.startsWith('Bearer ')) return authorization.slice(7)
+  return undefined
+}
+
+function readAdminToken(req: Request) {
+  const headerToken = req.headers['x-admin-token']
+  if (typeof headerToken === 'string' && headerToken.trim()) return headerToken.trim()
+  return readBearerToken(req)
+}
 
 function authMiddleware(req: Request, res: Response, next: Function) {
   if (!runtime.config.auth.enabled || PUBLIC_PATHS.has(req.path)) return next()
 
-  const apiKey = (req.headers['x-api-key'] as string | undefined)
-    ?? (req.headers.authorization?.startsWith('Bearer ')
-      ? req.headers.authorization.slice(7)
-      : undefined)
+  const apiKey = (req.headers['x-api-key'] as string | undefined) ?? readBearerToken(req)
 
   if (!apiKey || !runtime.config.auth.keys.includes(apiKey)) {
     runtime.logger.warn(runtime.i18n.t('logs.authRejected'), { path: req.path, ip: req.ip })
@@ -29,10 +39,16 @@ function authMiddleware(req: Request, res: Response, next: Function) {
   next()
 }
 
-function bootstrapPayload() {
+function bootstrapPayload(req?: Request) {
+  const session = runtime.adminAuth.verifyToken(readAdminToken(req as Request | undefined))
   return {
     apiVersion: API_VERSION,
     locale: runtime.config.locale,
+    admin: {
+      username: session?.username ?? runtime.config.admin.username,
+      authenticated: Boolean(session),
+      expiresAt: session?.expiresAt ?? null,
+    },
     logger: {
       level: runtime.config.logger.level,
       file: runtime.logger.getCurrentLogFile(),
@@ -42,6 +58,17 @@ function bootstrapPayload() {
     theme: runtime.config.theme,
     plugins: runtime.plugins.list(),
   }
+}
+
+function requireAdmin(req: Request, res: Response) {
+  const token = readAdminToken(req)
+  const session = runtime.adminAuth.verifyToken(token)
+  if (!session) {
+    runtime.logger.warn(runtime.i18n.t('logs.adminRejected'), { path: req.path, ip: req.ip })
+    res.status(403).json({ error: runtime.i18n.t('errors.adminRequired') })
+    return null
+  }
+  return session
 }
 
 router.use(authMiddleware)
@@ -81,8 +108,27 @@ router.get('/config', (_req, res) => {
   })
 })
 
-router.get('/system/bootstrap', (_req, res) => {
-  res.json(bootstrapPayload())
+router.get('/system/bootstrap', (req, res) => {
+  res.json(bootstrapPayload(req))
+})
+
+router.post('/system/admin/login', (req, res) => {
+  const { username, password } = req.body as { username?: string; password?: string }
+
+  if (username !== runtime.config.admin.username || password !== runtime.config.admin.password) {
+    runtime.logger.warn(runtime.i18n.t('logs.adminLoginFailed'), { user: username ?? '', ip: req.ip })
+    return res.status(401).json({ error: runtime.i18n.t('errors.invalidAdminCredentials') })
+  }
+
+  const session = runtime.adminAuth.issueToken(username)
+  runtime.logger.info(runtime.i18n.t('logs.adminLoginSucceeded'), { user: username, ip: req.ip })
+
+  res.json({
+    ok: true,
+    token: session.token,
+    username: session.username,
+    expiresAt: session.expiresAt,
+  })
 })
 
 router.get('/system/plugins', (_req, res) => {
@@ -90,6 +136,8 @@ router.get('/system/plugins', (_req, res) => {
 })
 
 router.post('/system/plugins/:id', (req, res) => {
+  if (!requireAdmin(req, res)) return
+
   const { enabled } = req.body as { enabled?: boolean }
   if (typeof enabled !== 'boolean') {
     return res.status(400).json({ error: runtime.i18n.t('errors.invalidPluginState') })
@@ -108,17 +156,19 @@ router.post('/system/plugins/:id', (req, res) => {
 })
 
 router.post('/system/plugins/:id/config', (req, res) => {
+  if (!requireAdmin(req, res)) return
+
   const plugin = runtime.plugins.getDescriptor(req.params.id)
   if (!plugin) return res.status(404).json({ error: runtime.i18n.t('errors.pluginNotFound') })
 
   const config = req.body?.config
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
-    return res.status(400).json({ error: 'config must be an object' })
+    return res.status(400).json({ error: runtime.i18n.t('errors.invalidPluginConfig') })
   }
 
   try {
     runtime.plugins.setConfig(plugin.id, config)
-    runtime.logger.info('plugin config updated', { plugin: plugin.id, keys: Object.keys(config) })
+    runtime.logger.info(runtime.i18n.t('logs.pluginConfigUpdated'), { plugin: plugin.id, keys: Object.keys(config) })
 
     res.json({
       ok: true,

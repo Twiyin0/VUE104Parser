@@ -38,6 +38,11 @@ type PluginDescriptor = {
 
 type BootstrapPayload = {
   apiVersion: string
+  admin: {
+    username: string
+    authenticated: boolean
+    expiresAt: number | null
+  }
   locale: {
     default: string
     fallback: string
@@ -86,6 +91,10 @@ function readStoredTheme(defaultTheme: string) {
   return localStorage.getItem('app.theme.id') || defaultTheme
 }
 
+function readStoredAdminToken() {
+  return localStorage.getItem('app.admin.token') || ''
+}
+
 export const useRuntimeStore = defineStore('runtime', () => {
   const ready = ref(false)
   const pluginDrawerOpen = ref(false)
@@ -96,6 +105,10 @@ export const useRuntimeStore = defineStore('runtime', () => {
   const logLines = ref<string[]>([])
   const currentLogFile = ref('')
   const apiVersion = ref('2.0.0')
+  const adminUsername = ref('admin')
+  const adminAuthenticated = ref(false)
+  const adminExpiresAt = ref<number | null>(null)
+  const adminToken = ref('')
   const site = ref({
     copyright: '',
     icp: '',
@@ -114,6 +127,14 @@ export const useRuntimeStore = defineStore('runtime', () => {
   const logViewerEnabled = computed(() =>
     enabledPlugins.value.some((plugin) => plugin.frontend?.featureFlags?.includes('debug-log-viewer')),
   )
+  const canManagePlugins = computed(() => adminAuthenticated.value)
+
+  function buildHeaders(contentType = true) {
+    const headers: Record<string, string> = {}
+    if (contentType) headers['Content-Type'] = 'application/json'
+    if (adminToken.value) headers['X-Admin-Token'] = adminToken.value
+    return headers
+  }
 
   function t(path: string, fallback = path) {
     const parts = path.split('.')
@@ -155,15 +176,30 @@ export const useRuntimeStore = defineStore('runtime', () => {
     }
   }
 
-  async function bootstrap() {
-    if (ready.value) return
+  async function bootstrap(force = false) {
+    const storedAdminToken = readStoredAdminToken()
+    if (storedAdminToken && !adminToken.value) {
+      adminToken.value = storedAdminToken
+    }
 
-    const bootstrapResponse = await fetch('/api/v1/system/bootstrap')
+    if (ready.value && !force) return
+
+    const bootstrapResponse = await fetch('/api/v1/system/bootstrap', {
+      headers: buildHeaders(false),
+    })
     const bootstrapData = await bootstrapResponse.json() as BootstrapPayload
 
     apiVersion.value = bootstrapData.apiVersion
     site.value = bootstrapData.site
     plugins.value = bootstrapData.plugins
+    adminUsername.value = bootstrapData.admin.username
+    adminAuthenticated.value = bootstrapData.admin.authenticated
+    adminExpiresAt.value = bootstrapData.admin.expiresAt
+
+    if (!bootstrapData.admin.authenticated) {
+      adminToken.value = ''
+      localStorage.removeItem('app.admin.token')
+    }
 
     await loadLocalePack(bootstrapData.locale.frontend || 'zh-cn')
 
@@ -182,10 +218,11 @@ export const useRuntimeStore = defineStore('runtime', () => {
   async function setPluginEnabled(id: string, enabled: boolean) {
     const response = await fetch(`/api/v1/system/plugins/${id}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildHeaders(),
       body: JSON.stringify({ enabled }),
     })
     const payload = await response.json()
+    if (!response.ok) throw new Error(payload.error ?? 'Failed to update plugin state')
     if (payload.plugin) {
       plugins.value = plugins.value.map((plugin) => plugin.id === id ? payload.plugin : plugin)
       if (!availableThemes.value.some((theme) => theme.id === themeId.value)) {
@@ -199,7 +236,7 @@ export const useRuntimeStore = defineStore('runtime', () => {
   async function savePluginConfig(id: string, config: Record<string, boolean | number | string>) {
     const response = await fetch(`/api/v1/system/plugins/${id}/config`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildHeaders(),
       body: JSON.stringify({ config }),
     })
     const payload = await response.json()
@@ -207,8 +244,34 @@ export const useRuntimeStore = defineStore('runtime', () => {
 
     if (payload.plugin) {
       plugins.value = plugins.value.map((plugin) => plugin.id === id ? payload.plugin : plugin)
+      applyTheme()
       void clientLogger.info('plugin config saved', { id, keys: Object.keys(config) })
     }
+  }
+
+  async function adminLogin(username: string, password: string) {
+    const response = await fetch('/api/v1/system/admin/login', {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ username, password }),
+    })
+    const payload = await response.json()
+    if (!response.ok) throw new Error(payload.error ?? 'Login failed')
+
+    adminToken.value = payload.token
+    adminUsername.value = payload.username
+    adminAuthenticated.value = true
+    adminExpiresAt.value = payload.expiresAt
+    localStorage.setItem('app.admin.token', payload.token)
+
+    await bootstrap(true)
+  }
+
+  function adminLogout() {
+    adminToken.value = ''
+    adminAuthenticated.value = false
+    adminExpiresAt.value = null
+    localStorage.removeItem('app.admin.token')
   }
 
   async function refreshLogs(limit = 200) {
@@ -236,6 +299,10 @@ export const useRuntimeStore = defineStore('runtime', () => {
     logDrawerOpen,
     locale,
     apiVersion,
+    adminUsername,
+    adminAuthenticated,
+    adminExpiresAt,
+    canManagePlugins,
     site,
     plugins,
     enabledPlugins,
@@ -247,6 +314,8 @@ export const useRuntimeStore = defineStore('runtime', () => {
     themeId,
     t,
     bootstrap,
+    adminLogin,
+    adminLogout,
     setPluginEnabled,
     savePluginConfig,
     refreshLogs,

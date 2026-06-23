@@ -617,6 +617,62 @@
   .plugin-config-success { @apply text-xs text-emerald-600 dark:text-emerald-300; }
   .plugin-config-error { @apply text-xs text-red-500 dark:text-red-300; }
   .plugin-empty { @apply text-sm text-slate-400 dark:text-slate-500 p-6; }
+  .plugin-mode-banner {
+    @apply mt-3 inline-flex flex-col gap-1 rounded-2xl border px-3 py-2 text-xs text-slate-500 dark:text-slate-400;
+    border-color: rgba(226, 232, 240, 0.9);
+    background: rgba(248, 250, 252, 0.82);
+  }
+  .dark .plugin-mode-banner {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: rgba(15, 23, 42, 0.58);
+  }
+  .plugin-mode-banner strong { @apply text-slate-700 dark:text-slate-200; }
+  .plugin-mode-banner.editable {
+    border-color: rgba(45, 212, 191, 0.42);
+    background: rgba(204, 251, 241, 0.72);
+  }
+  .dark .plugin-mode-banner.editable {
+    border-color: rgba(13, 148, 136, 0.46);
+    background: rgba(17, 94, 89, 0.24);
+  }
+  .plugin-switch input:disabled + .plugin-switch-track {
+    @apply opacity-60;
+  }
+  .plugin-config-input:disabled,
+  .plugin-config-toggle input:disabled {
+    @apply cursor-not-allowed opacity-70;
+  }
+
+  .admin-card {
+    @apply rounded-3xl border p-5 space-y-4;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98));
+    box-shadow: 0 20px 40px -34px rgba(15, 23, 42, 0.22);
+  }
+  .dark .admin-card {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.96));
+    box-shadow: 0 24px 44px -34px rgba(2, 6, 23, 0.82);
+  }
+  .admin-form-grid { @apply grid gap-4 md:grid-cols-2; }
+  .admin-field { @apply flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200; }
+  .admin-field span { @apply text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400; }
+  .admin-actions { @apply flex items-center gap-3 flex-wrap; }
+  .admin-session-row { @apply flex items-center justify-between gap-4 flex-wrap; }
+  .admin-session-pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium;
+    border-color: rgba(45, 212, 191, 0.42);
+    background: rgba(204, 251, 241, 0.82);
+    color: #0f766e;
+  }
+  .dark .admin-session-pill {
+    border-color: rgba(13, 148, 136, 0.46);
+    background: rgba(17, 94, 89, 0.24);
+    color: #99f6e4;
+  }
+  .admin-notice { @apply rounded-2xl px-3 py-2 text-sm; }
+  .admin-notice-success { @apply bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300; }
+  .admin-notice-error { @apply bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300; }
 
   .log-viewer {
     @apply flex-1 rounded-3xl border p-4 text-xs leading-6 overflow-auto font-mono space-y-2;
