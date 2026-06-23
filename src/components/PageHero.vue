@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppIcon from './AppIcon.vue'
 
 interface HeroBadge {
   label: string
@@ -31,7 +32,9 @@ function badgeClass(tone?: HeroBadge['tone']) {
       <div class="page-hero-heading">
         <div class="page-hero-title-row">
           <h1 class="page-hero-title">
-            <span class="page-hero-icon">{{ icon }}</span>
+            <span class="page-hero-icon">
+              <AppIcon :name="icon" size="1.5rem" />
+            </span>
             <span>{{ title }}</span>
           </h1>
           <div v-if="badges.length" class="page-hero-badges">

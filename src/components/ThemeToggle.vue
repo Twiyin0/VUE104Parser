@@ -1,33 +1,44 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import AppSelect from './AppSelect.vue'
 import { useTheme } from '../composables/useTheme'
 import { useI18n } from '../composables/useI18n'
 
 const { availableThemes, themeId, themeMode, setTheme, setThemeMode } = useTheme()
 const { t } = useI18n()
+
+const modeOptions = computed(() => [
+  { value: 'system', label: t('theme.system', 'System') },
+  { value: 'light', label: t('theme.light', 'Light') },
+  { value: 'dark', label: t('theme.dark', 'Dark') },
+])
+
+const themeOptions = computed(() => {
+  return availableThemes.value.map((theme) => ({
+    value: theme.id,
+    label: t(theme.labelKey, theme.id),
+  }))
+})
 </script>
 
 <template>
   <div class="theme-control">
     <label class="theme-control-item">
-      <span>{{ t('theme.mode', 'Mode') }}</span>
-      <select
-        class="app-select theme-select"
-        :value="themeMode"
-        @change="setThemeMode(($event.target as HTMLSelectElement).value as 'system' | 'light' | 'dark')"
-      >
-        <option value="system">{{ t('theme.system', 'System') }}</option>
-        <option value="light">{{ t('theme.light', 'Light') }}</option>
-        <option value="dark">{{ t('theme.dark', 'Dark') }}</option>
-      </select>
+      <AppSelect
+        :model-value="themeMode"
+        :options="modeOptions"
+        variant="embedded"
+        @update:model-value="setThemeMode($event as 'system' | 'light' | 'dark')"
+      />
     </label>
 
     <label class="theme-control-item">
-      <span>{{ t('theme.palette', 'Theme') }}</span>
-      <select class="app-select theme-select" :value="themeId" @change="setTheme(($event.target as HTMLSelectElement).value)">
-        <option v-for="theme in availableThemes" :key="theme.id" :value="theme.id">
-          {{ t(theme.labelKey, theme.id) }}
-        </option>
-      </select>
+      <AppSelect
+        :model-value="themeId"
+        :options="themeOptions"
+        variant="embedded"
+        @update:model-value="setTheme"
+      />
     </label>
   </div>
 </template>

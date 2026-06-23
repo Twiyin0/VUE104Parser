@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppSelect from './AppSelect.vue'
 import { useDbStore } from '../stores/db'
 import { useI18n } from '../composables/useI18n'
 
 const db = useDbStore()
 const { t } = useI18n()
+
+const tableOptions = computed(() => [
+  { value: '__null__', label: t('db.all', 'All points (Full/null priority)') },
+  ...db.tableNames.map((tn) => ({
+    value: tn ?? '__null__',
+    label: tn ?? t('db.all', 'All points (Full/null priority)'),
+  })),
+])
 
 const selValue = computed({
   get: () => db.curTable ?? '__null__',
@@ -37,12 +46,7 @@ function onFileChange(event: Event) {
 
     <span class="table-sel-wrap">
       <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{{ t('db.mode', 'Point Table Mode') }}</span>
-      <select v-model="selValue" class="app-select app-select-sm">
-        <option value="__null__">{{ t('db.all', 'All points (Full/null priority)') }}</option>
-        <option v-for="tn in db.tableNames" :key="String(tn ?? '__null__')" :value="tn ?? '__null__'">
-          {{ tn ?? t('db.all', 'All points (Full/null priority)') }}
-        </option>
-      </select>
+      <AppSelect v-model="selValue" :options="tableOptions" size="sm" />
     </span>
 
     <button class="db-clear" @click="db.clear()">{{ t('db.remove', 'Remove') }}</button>

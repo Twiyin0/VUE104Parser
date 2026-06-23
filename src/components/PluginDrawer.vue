@@ -3,6 +3,7 @@ import { computed, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRuntimeStore } from '../stores/runtime'
 import { useI18n } from '../composables/useI18n'
+import AppIcon from './AppIcon.vue'
 
 const runtime = useRuntimeStore()
 const { plugins, pluginDrawerOpen } = storeToRefs(runtime)
@@ -88,7 +89,9 @@ async function savePlugin(pluginId: string) {
             <h2>{{ t('plugins.title', 'Plugin Center') }}</h2>
             <p>{{ t('plugins.description', 'Runtime plugins for frontend and backend.') }}</p>
           </div>
-          <button class="app-icon-btn" @click="pluginDrawerOpen = false">x</button>
+          <button class="app-icon-btn" @click="pluginDrawerOpen = false">
+            <AppIcon name="xmark" size="1rem" />
+          </button>
         </div>
 
         <div v-if="visiblePlugins.length" class="app-drawer-body plugin-list">
@@ -138,7 +141,9 @@ async function savePlugin(pluginId: string) {
             >
               <button class="plugin-config-togglebar" type="button" @click="toggleConfig(plugin.id)">
                 <span class="plugin-config-title">{{ t('plugins.configTitle', 'Plugin Settings') }}</span>
-                <span class="plugin-config-chevron" :class="{ open: configOpen[plugin.id] }">⌄</span>
+                <span class="plugin-config-chevron" :class="{ open: configOpen[plugin.id] }">
+                  <AppIcon name="chevron-down" size="0.95rem" />
+                </span>
               </button>
 
               <div v-if="configOpen[plugin.id]" class="plugin-config-body">

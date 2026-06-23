@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{
   title: string
@@ -91,12 +92,12 @@ defineExpose({ open, close })
   <div class="cs" :class="{ collapsed }">
     <div class="cs-head" @click="toggle">
       <div class="cs-head-left">
-        <span v-if="icon">{{ icon }}</span>
+        <AppIcon v-if="icon" :name="icon" size="1rem" />
         {{ title }}
         <small v-if="subtitle" class="text-slate-400 dark:text-slate-500 font-normal text-xs">{{ subtitle }}</small>
         <span class="cs-badge" :class="[badgeClass, { zero: !count }]">{{ count ?? 0 }}</span>
       </div>
-      <span class="cs-chevron">▾</span>
+      <span class="cs-chevron"><AppIcon name="chevron-down" size="0.95rem" /></span>
     </div>
     <div class="cs-body" ref="bodyRef">
       <div ref="contentRef">

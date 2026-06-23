@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
 import DbBar from '../components/DbBar.vue'
 import CollapseSection from '../components/CollapseSection.vue'
 import PageHero from '../components/PageHero.vue'
 import { useDbStore } from '../stores/db'
-import { esc, addrHex, protoBadge, nameCell, qdsStr, opClass, ycValueStr } from '../composables/useHtmlUtils'
+import { esc, addrHex, protoBadge, nameCell, qdsStr, opClass, ycValueStr, htmlIcon } from '../composables/useHtmlUtils'
 
 const db = useDbStore()
 
@@ -170,7 +171,7 @@ function renderAll(results: any[]) {
     const rowCls = proto === '101' ? 'bg-cyan-50/30 dark:bg-cyan-900/10' : ''
 
     if (frame.type === 'error') {
-      _ev.push(`<div class="ev-item ev-unknown">${pb}<span class="ev-icon">❌</span>${esc(frame.error)}</div>`)
+      _ev.push(`<div class="ev-item ev-unknown">${pb}${htmlIcon('circle-xmark', 'ev-icon', '错误')}${esc(frame.error)}</div>`)
       continue
     }
 
@@ -180,7 +181,9 @@ function renderAll(results: any[]) {
       const fcvStr = li.ctrl?.fcv != null ? li.ctrl.fcv : '—'
       const acdStr = li.ctrl?.acd != null ? (li.ctrl.acd ? '<span class="text-amber-500">1(有数据)</span>' : '0') : '—'
       const dfcStr = li.ctrl?.dfc != null ? (li.ctrl.dfc ? '<span class="text-red-500">1(满载)</span>' : '0') : '—'
-      const csStr  = li.csValid ? '<span class="text-emerald-600">✓ 正确</span>' : '<span class="text-red-500">✗ 错误</span>'
+      const csStr  = li.csValid
+        ? `<span class="inline-flex items-center gap-1 text-emerald-600">${htmlIcon('circle-check', 'app-icon-sm', '正确')}正确</span>`
+        : `<span class="inline-flex items-center gap-1 text-red-500">${htmlIcon('circle-xmark', 'app-icon-sm', '错误')}错误</span>`
       _link101.push(`<tr class="${rowCls}">
         <td class="mono">${li.linkAddr ?? '—'}</td>
         <td>${li.frameType === 'fixed' ? '固定帧' : '可变帧(无ASDU)'}</td>
@@ -288,30 +291,30 @@ function renderAll(results: any[]) {
           const _n = db.ptName('yx', yx.point, proto)
           bodyLines.push(`  ${i + 1}. 类型:${esc(yx.typeHex)}  点号(dec):${yx.point}${_n ? `  名称:${_n}` : ''}  状态:${esc(yx.state)}(${esc(yx.stateHex)})  时标:${esc(yx.time)}`)
           _yx.push(`<tr class="bg-orange-50/50 dark:bg-orange-900/10">
-            <td class="text-orange-500 font-semibold">故障↑${i + 1}</td><td>${pb}</td>
+            <td class="text-orange-500 font-semibold">故障${i + 1}</td><td>${pb}</td>
             <td>${yx.point}</td><td class="mono">${addrHex(yx.point, proto)}</td>
             ${nameCell(_n)}<td>${esc(yx.state)}</td><td>${esc(yx.time)}</td>
           </tr>`)
         }
         for (const [i, yc] of (frame.yc ?? []).entries()) {
-          if (i === 0) bodyLines.push(`\n📊 遥测信息 (${frame.yc.length}条, 类型:${esc(frame.ycTypeHex)}):`)
+          if (i === 0) bodyLines.push(`\n[遥测信息] (${frame.yc.length}条, 类型:${esc(frame.ycTypeHex)}):`)
           const vd = yc.rawValue !== undefined ? `${yc.value}(raw:${yc.rawValue})` : (typeof yc.value === 'number' ? yc.value.toFixed(4) : yc.value)
           const _n = db.ptName('yc', yc.addr, proto)
           bodyLines.push(`  ${i + 1}. 地址:${esc(yc.hexAddr)}${_n ? `  名称:${_n}` : ''}  值:${vd}  (${esc(yc.valueType)})`)
           _yc.push(`<tr class="bg-orange-50/50 dark:bg-orange-900/10">
-            <td class="text-orange-500 font-semibold">故障↑${i + 1}</td><td>${pb}</td>
+            <td class="text-orange-500 font-semibold">故障${i + 1}</td><td>${pb}</td>
             <td>${yc.addr}</td><td class="mono">${esc(yc.hexAddr)}</td>
             ${nameCell(_n)}
             <td>${typeof yc.value === 'number' ? yc.value.toFixed(4) : esc(String(yc.value ?? ''))}</td>
             <td><span class="type-tag">${esc(yc.valueType)}</span></td><td>—</td>
           </tr>`)
         }
-        if (frame.error) bodyLines.push(`\n⚠️ 解析错误: ${esc(frame.error)}`)
+        if (frame.error) bodyLines.push(`\n[解析错误] ${esc(frame.error)}`)
         const faultId = `fault-${Math.random().toString(36).slice(2, 8)}`
         _ev.push(`<div class="fault-card" id="${faultId}">
           <div class="fault-head" onclick="toggleBlock('${faultId}')">
-            <span class="fault-title">🔥 故障事件 ${pb} &nbsp; COT=${frame.cot} &nbsp; 公共地址=${frame.addr} &nbsp; (遥信:${(frame.yx ?? []).length}条 / 遥测:${(frame.yc ?? []).length}条)</span>
-            <span class="fault-chev">▾</span>
+            <span class="fault-title">${htmlIcon('triangle-exclamation', 'ev-icon', '故障')} 故障事件 ${pb} &nbsp; COT=${frame.cot} &nbsp; 公共地址=${frame.addr} &nbsp; (遥信:${(frame.yx ?? []).length}条 / 遥测:${(frame.yc ?? []).length}条)</span>
+            <span class="fault-chev">${htmlIcon('chevron-down', 'app-icon-sm', '展开')}</span>
           </div>
           <div class="fault-body">
             <div class="fault-inner">${bodyLines.join('\n') || '（无详细信息）'}</div>
@@ -320,7 +323,7 @@ function renderAll(results: any[]) {
       }
 
       case 'total_call':
-        _ev.push(`<div class="ev-item ev-total">${pb}<span class="ev-icon">📞</span>总召唤
+        _ev.push(`<div class="ev-item ev-total">${pb}${htmlIcon('bell', 'ev-icon', '总召唤')}总召唤
           &nbsp;命令=${esc(frame.command)}
           ${frame.group != null ? '&nbsp;组=' + esc(frame.group) : ''}
           &nbsp;COT=${esc(frame.cotDesc ?? frame.cot)}
@@ -330,20 +333,20 @@ function renderAll(results: any[]) {
         </div>`); break
 
       case 'clock_sync':
-        _ev.push(`<div class="ev-item ev-clock">${pb}<span class="ev-icon">🕐</span>${esc(frame.desc ?? '时钟')}
+        _ev.push(`<div class="ev-item ev-clock">${pb}${htmlIcon('clock', 'ev-icon', '时钟')}${esc(frame.desc ?? '时钟')}
           &nbsp;公共地址=${esc(frame.addr)}
           ${frame.time ? '&nbsp;时间=' + esc(frame.time) : ''}
           ${frame.pn ? '<span class="pn-neg">[否定]</span>' : ''}
         </div>`); break
 
       case 'init_end':
-        _ev.push(`<div class="ev-item ev-init">${pb}<span class="ev-icon">🔄</span>初始化结束
+        _ev.push(`<div class="ev-item ev-init">${pb}${htmlIcon('refresh-cw', 'ev-icon', '初始化')}初始化结束
           &nbsp;原因=${esc(frame.coiDesc ?? '')}
           &nbsp;公共地址=${esc(frame.addr)}
         </div>`); break
 
       case 'energy_call':
-        _ev.push(`<div class="ev-item ev-energy">${pb}<span class="ev-icon">⚡</span>电能量召唤
+        _ev.push(`<div class="ev-item ev-energy">${pb}${htmlIcon('bolt', 'ev-icon', '电能量召唤')}电能量召唤
           &nbsp;${esc(frame.qccDesc ?? '')}
           &nbsp;COT=${esc(frame.cotDesc ?? frame.cot)}
           &nbsp;公共地址=${esc(frame.addr)}
@@ -351,23 +354,32 @@ function renderAll(results: any[]) {
         </div>`); break
 
       case 'test_cmd':
-        _ev.push(`<div class="ev-item ev-test">${pb}<span class="ev-icon">🧪</span>${esc(frame.desc ?? '测试命令')}
+        _ev.push(`<div class="ev-item ev-test">${pb}${htmlIcon('wand-magic-sparkles', 'ev-icon', '测试命令')}${esc(frame.desc ?? '测试命令')}
           &nbsp;FBP=${esc(frame.fbpHex ?? '')}
-          ${frame.fbpValid ? '<span class="text-lime-500">✓ 55AA正确</span>' : ''}
+          ${frame.fbpValid ? `<span class="inline-flex items-center gap-1 text-lime-500">${htmlIcon('circle-check', 'app-icon-sm', '正确')}55AA正确</span>` : ''}
           &nbsp;公共地址=${esc(frame.addr)}
           ${frame.pn ? '<span class="pn-neg">[否定]</span>' : ''}
         </div>`); break
 
       case 'reset_process':
-        _ev.push(`<div class="ev-item ev-reset">${pb}<span class="ev-icon">🔃</span>${esc(frame.desc ?? '复位进程')}
+        _ev.push(`<div class="ev-item ev-reset">${pb}${htmlIcon('rotate-cw', 'ev-icon', '复位进程')}${esc(frame.desc ?? '复位进程')}
           &nbsp;${esc(frame.qrpDesc ?? '')}
           &nbsp;公共地址=${esc(frame.addr)}
           ${frame.pn ? '<span class="pn-neg">[否定]</span>' : ''}
         </div>`); break
 
       case 'file_service': {
-        const svcIcon: Record<string, string> = { F_AF_NA:'📢',F_SC_NA:'📥',F_DR_TA:'📂',F_FR_NA:'✅',F_SR_NA:'📑',F_SG_NA:'📦',F_LS_NA:'🏁', F_FR_NA_1:'🗂️' }
-        const icon = frame.desc?.includes('确认') ? '🤝' : (svcIcon[frame.service] ?? '📁')
+        const svcIcon: Record<string, string> = {
+          F_AF_NA: 'speaker',
+          F_SC_NA: 'inbox-arrow-down',
+          F_DR_TA: 'folder',
+          F_FR_NA: 'circle-check',
+          F_SR_NA: 'clipboard-list',
+          F_SG_NA: 'box-archive',
+          F_LS_NA: 'flag',
+          F_FR_NA_1: 'files'
+        }
+        const icon = frame.desc?.includes('确认') ? 'handshake' : (svcIcon[frame.service] ?? 'file')
         const lines: string[] = []
         if (frame.packetTypeName) lines.push(`附加包类型: ${esc(frame.packetTypeName)} (${frame.packetType})`)
         if (frame.infoObjAddr != null) lines.push(`信息体地址(IOA): ${esc(frame.infoObjAddr)}`)
@@ -418,21 +430,21 @@ function renderAll(results: any[]) {
         if (frame.rawHex) lines.push(`原始附加包(HEX):\n${esc(frame.rawHex)}`)
         lines.push(`公共地址: ${frame.addr}  COT: ${esc(frame.cotDesc ?? frame.cot)}`)
         const faultId = `fault-${Math.random().toString(36).slice(2, 8)}`
-        _ev.push(`<div class="fault-card" id="${faultId}"><div class="fault-head" onclick="toggleBlock('${faultId}')"><span class="fault-title text-cyan-300">${pb}${icon} ${esc(frame.service ?? 'FILE')} &nbsp; ${esc(frame.desc)}</span><span class="fault-chev">▾</span></div><div class="fault-body"><div class="fault-inner text-cyan-200">${lines.join('\n')}</div></div></div>`)
+        _ev.push(`<div class="fault-card" id="${faultId}"><div class="fault-head" onclick="toggleBlock('${faultId}')"><span class="fault-title text-cyan-300">${pb}${htmlIcon(icon, 'ev-icon', '文件事件')} ${esc(frame.service ?? 'FILE')} &nbsp; ${esc(frame.desc)}</span><span class="fault-chev">${htmlIcon('chevron-down', 'app-icon-sm', '展开')}</span></div><div class="fault-body"><div class="fault-inner text-cyan-200">${lines.join('\n')}</div></div></div>`)
         break
       }
 
       case 'other':
-        _ev.push(`<div class="ev-item ev-unknown">${pb}<span class="ev-icon">🔄</span>控制帧/U帧 &nbsp;控制域=${esc(frame.ctrl ?? '')}</div>`); break
+        _ev.push(`<div class="ev-item ev-unknown">${pb}${htmlIcon('refresh-cw', 'ev-icon', '控制帧')}控制帧/U帧 &nbsp;控制域=${esc(frame.ctrl ?? '')}</div>`); break
 
       case 'unknown':
-        _ev.push(`<div class="ev-item ev-unknown">${pb}<span class="ev-icon">❓</span>未知 TI=${esc(frame.tiHex ?? frame.ti)}
+        _ev.push(`<div class="ev-item ev-unknown">${pb}${htmlIcon('circle-question', 'ev-icon', '未知')}未知 TI=${esc(frame.tiHex ?? frame.ti)}
           &nbsp;COT=${esc(frame.cotDesc ?? frame.cot)}
           &nbsp;公共地址=${esc(frame.addr)}
         </div>`); break
 
       default:
-        _ev.push(`<div class="ev-item ev-unknown">${pb}<span class="ev-icon">📄</span>${esc(JSON.stringify(frame))}</div>`)
+        _ev.push(`<div class="ev-item ev-unknown">${pb}${htmlIcon('file-code', 'ev-icon', '报文')} ${esc(JSON.stringify(frame))}</div>`)
     }
   }
 
@@ -446,7 +458,7 @@ function renderAll(results: any[]) {
   ctrlRows.value    = setBody(_ctrl,   '无遥控报文')
   paramRows.value   = setBody(_param,  '无定值操作')
   link101Rows.value = setBody(_link101,'无101链路帧')
-  eventLog.value    = _ev.length ? _ev.join('') : '<span class="log-empty">✨ 无其他事件</span>'
+  eventLog.value    = _ev.length ? _ev.join('') : `<span class="log-empty">${htmlIcon('circle-check', 'app-icon-sm', '空')} 无其他事件</span>`
 
   counts.value = { yc: _yc.length, yx: _yx.length, energy: _energy.length, ctrl: _ctrl.length, param: _param.length, link101: _link101.length, events: _ev.length }
   syncSectionsWithData()
@@ -458,7 +470,7 @@ function renderAll(results: any[]) {
     <div class="page-surface">
 
       <PageHero
-        icon="⚡"
+        icon="bolt"
         title="104/101规约解析器"
         tone="blue"
         :badges="[
@@ -488,14 +500,17 @@ function renderAll(results: any[]) {
                  focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <div class="mb-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
-        💡 协议自动识别：<code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">68...16</code>(L/L/68H结构) → 101可变帧 |
+        <span class="inline-flex items-center gap-1.5">
+          <AppIcon name="circle-information" size="0.95rem" />
+          协议自动识别：<code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">68...16</code>(L/L/68H结构) → 101可变帧 |
+        </span>
         <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">10...16</code>(6字节) → 101固定帧 |
         <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">68...</code>(无16H结尾) → 104
       </div>
 
       <div class="flex gap-2.5 mb-6 flex-wrap">
-        <button class="btn btn-primary" @click="parse">🔍 解析报文</button>
-        <button class="btn btn-ghost"   @click="clear">🗑️ 清空</button>
+        <button class="btn btn-primary" @click="parse"><AppIcon name="search" size="1rem" />解析报文</button>
+        <button class="btn btn-ghost"   @click="clear"><AppIcon name="trash" size="1rem" />清空</button>
       </div>
 
       <div class="error-box" :class="{ show: showError }">{{ errorMsg }}</div>
@@ -503,7 +518,7 @@ function renderAll(results: any[]) {
       <!-- Results grid -->
       <div class="grid grid-cols-1 gap-4">
 
-        <CollapseSection ref="secYc" icon="📊" title="遥测" subtitle="YC · TI=9/11/13" :count="counts.yc" @update:open="sectionOpen.yc = $event">
+        <CollapseSection ref="secYc" icon="chart-line" title="遥测" subtitle="YC · TI=9/11/13" :count="counts.yc" @update:open="sectionOpen.yc = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -513,7 +528,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secYx" icon="🚦" title="遥信 / SOE" subtitle="YX · TI=1/3/30/31" :count="counts.yx" @update:open="sectionOpen.yx = $event">
+        <CollapseSection ref="secYx" icon="signal" title="遥信 / SOE" subtitle="YX · TI=1/3/30/31" :count="counts.yx" @update:open="sectionOpen.yx = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -523,7 +538,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secEnergy" icon="⚡" title="电能量" subtitle="TI=206/207" :count="counts.energy" @update:open="sectionOpen.energy = $event">
+        <CollapseSection ref="secEnergy" icon="bolt" title="电能量" subtitle="TI=206/207" :count="counts.energy" @update:open="sectionOpen.energy = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(dec)</th><th>地址(hex)</th>
@@ -533,7 +548,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secCtrl" icon="🎮" title="遥控" subtitle="Control · TI=45/46" :count="counts.ctrl" @update:open="sectionOpen.ctrl = $event">
+        <CollapseSection ref="secCtrl" icon="sliders" title="遥控" subtitle="Control · TI=45/46" :count="counts.ctrl" @update:open="sectionOpen.ctrl = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>#</th><th>协议</th><th>地址(hex)</th>
@@ -543,7 +558,7 @@ function renderAll(results: any[]) {
           </div>
         </CollapseSection>
 
-        <CollapseSection ref="secParam" icon="⚙️" title="定值读写" subtitle="Parameter · TI=200~203" :count="counts.param" @update:open="sectionOpen.param = $event">
+        <CollapseSection ref="secParam" icon="gear" title="定值读写" subtitle="Parameter · TI=200~203" :count="counts.param" @update:open="sectionOpen.param = $event">
           <div class="table-wrap">
             <table><thead><tr>
               <th>协议</th><th>操作</th><th>定值区SN</th><th>地址(hex)</th>
@@ -556,7 +571,7 @@ function renderAll(results: any[]) {
       </div>
 
       <!-- 101链路层 -->
-      <CollapseSection ref="secLink" icon="🔗" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-4" @update:open="sectionOpen.link101 = $event">
+      <CollapseSection ref="secLink" icon="link" title="101链路层帧" subtitle="FT1.2 固定帧 / 无ASDU帧" :count="counts.link101" badge-class="bg-cyan-500" class="mt-4" @update:open="sectionOpen.link101 = $event">
         <div class="table-wrap">
           <table><thead><tr>
             <th>链路地址</th><th>帧类型</th><th>方向/PRM</th><th>FC功能码</th>
@@ -567,7 +582,7 @@ function renderAll(results: any[]) {
       </CollapseSection>
 
       <!-- 其他事件 -->
-      <CollapseSection ref="secEvents" icon="📋" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events" class="mt-4" @update:open="sectionOpen.events = $event">
+      <CollapseSection ref="secEvents" icon="clipboard-list" title="其他事件" subtitle="总召/故障/时钟/初始化/测试/复位/电能量召唤/未知" :count="counts.events" class="mt-4" @update:open="sectionOpen.events = $event">
         <div class="log-panel" v-html="eventLog" />
       </CollapseSection>
 

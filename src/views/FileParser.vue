@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
 import DbBar from '../components/DbBar.vue'
 import PageHero from '../components/PageHero.vue'
 import { useDbStore } from '../stores/db'
-import { esc, addrHex, protoBadge, dirBadge, typeTag, highlightTime } from '../composables/useHtmlUtils'
+import { esc, addrHex, protoBadge, dirBadge, typeTag, highlightTime, htmlIcon } from '../composables/useHtmlUtils'
 
 const db = useDbStore()
 
@@ -36,7 +37,7 @@ const forceProto = ref<'auto' | '104' | '101'>('auto')
 
 const dragOver = ref(false)
 const hasFile = ref(false)
-const dropIcon = ref('📄')
+const dropIcon = ref('file')
 const dropLabel = ref('点击选择 log 文件，或拖拽到此处')
 const dropName = ref('')
 
@@ -58,7 +59,7 @@ function loadLogFile(file: File) {
   reader.onload = (ev) => {
     logText.value = ev.target?.result as string
     hasFile.value = true
-    dropIcon.value = '✅'
+    dropIcon.value = 'circle-check'
     dropLabel.value = '已加载文件'
     dropName.value = `${file.name}  (${(file.size / 1024).toFixed(1)} KB)`
   }
@@ -102,7 +103,7 @@ async function parseLog() {
     parseResult.value = await resp.json()
     renderResult(parseResult.value)
     downloadEnabled.value = true
-    parseStatus.value = `✓ 解析完成 ${parseResult.value.lines?.length ?? 0} 行`
+    parseStatus.value = `解析完成 ${parseResult.value.lines?.length ?? 0} 行`
     setDefaultTable(parseResult.value)
   } catch (e: any) {
     errorMsg.value = '解析失败：' + e.message
@@ -118,7 +119,7 @@ function clearAll() {
   logInput.value = ''
   parseResult.value = null
   hasFile.value = false
-  dropIcon.value = '📄'
+  dropIcon.value = 'file'
   dropLabel.value = '点击选择 log 文件，或拖拽到此处'
   dropName.value = ''
   downloadEnabled.value = false
@@ -240,7 +241,7 @@ function renderResult(result: any) {
           ${db2}${pb}
           <span class="hex-raw">${highlightTime(esc(line.prefix ?? ''))} <span class="text-slate-400">${esc(line.hexStr ?? '')}</span></span>
           <span class="frame-summary">${summarizeFrames(line.frames ?? [])}</span>
-          <span class="hex-chevron">▾</span>
+          <span class="hex-chevron">${htmlIcon('chevron-down', 'app-icon-sm', '展开')}</span>
         </div>
         <div class="hex-body">
           <div class="frames-wrap">${renderFrames(line.frames ?? [], line.protocol)}</div>
@@ -270,7 +271,7 @@ function summarizeFrames(frames: any[]): string {
     if (t === 'reset_process') return '复位'
     if (t === 'file_service') return '文件'
     if (t === 'link_frame') return '链路帧'
-    if (t === 'error') return '⚠解析错误'
+    if (t === 'error') return '解析错误'
     return t
   }).join(' · ')
 }
@@ -284,7 +285,7 @@ function renderFrame(f: any, idx: number, proto: string): string {
   const cardId = `fc_${idx}_${Math.random().toString(36).slice(2, 6)}`
   const pb = protoBadge(f.protocol ?? proto)
   const tag = typeTag(f.type)
-  if (f.type === 'error') return `<div class="frame-error">⚠ ${esc(f.error)}</div>`
+  if (f.type === 'error') return `<div class="frame-error">${htmlIcon('triangle-exclamation', 'app-icon-sm', '错误')} ${esc(f.error)}</div>`
 
   let body = ''
   if (f.type === 'yc') body = renderYC(f, proto)
@@ -302,7 +303,7 @@ function renderFrame(f: any, idx: number, proto: string): string {
   <div class="frame-card" id="${cardId}">
     <div class="frame-card-head" onclick="toggleBlock('${cardId}')">
       <span>${pb}${tag}${countStr}</span>
-      <span class="hex-chevron">▾</span>
+      <span class="hex-chevron">${htmlIcon('chevron-down', 'app-icon-sm', '展开')}</span>
     </div>
     <div class="frame-card-body">
       <div class="frame-table-wrap">${body}</div>
@@ -339,7 +340,7 @@ function renderYX(f: any, proto: string): string {
 function renderFault(f: any, proto: string): string {
   let html = ''
   if ((f.yx ?? []).length) {
-    html += '<div class="frame-block-header">📍 遥信</div>'
+    html += `<div class="frame-block-header">${htmlIcon('location-check', 'app-icon-sm', '遥信')} 遥信</div>`
     const rows = f.yx.map((item: any, i: number) => {
       const name = ptName('yx', item.point, proto)
       return `<tr><td>${i + 1}</td><td>${item.point ?? ''}</td><td class="mono">${addrHex(item.point, proto)}</td>
@@ -349,7 +350,7 @@ function renderFault(f: any, proto: string): string {
     html += `<table><thead><tr><th>#</th><th>地址(dec)</th><th>地址(hex)</th><th class="col-name">点名</th><th>状态</th><th>时标</th></tr></thead><tbody>${rows}</tbody></table>`
   }
   if ((f.yc ?? []).length) {
-    html += '<div class="frame-block-header">📊 遥测</div>'
+    html += `<div class="frame-block-header">${htmlIcon('chart-line', 'app-icon-sm', '遥测')} 遥测</div>`
     const rows = f.yc.map((item: any, i: number) => {
       const name = ptName('yc', item.addr ?? item.point, proto)
       return `<tr><td>${i + 1}</td><td>${item.addr ?? item.point ?? ''}</td><td class="mono">${addrHex(item.addr ?? item.point, proto)}</td>
@@ -409,7 +410,7 @@ function renderLinkFrame(f: any): string {
     帧类型: ${esc(f.frameType || '—')}
     方向: ${esc(f.ctrl?.direction || '—')}
     功能码: ${esc(String(f.ctrl?.fc ?? '—'))} ${esc(f.ctrl?.fcName || '')}
-    校验: ${f.csValid ? '✓' : '✗'}
+    校验: ${f.csValid ? '正确' : '错误'}
   </div>`
 }
 
@@ -578,7 +579,7 @@ function downloadLog() {
     <div class="page-surface">
 
       <PageHero
-        icon="📄"
+        icon="file"
         title="Log 文件解析器"
         tone="violet"
         :badges="[
@@ -602,7 +603,9 @@ function downloadLog() {
       <div class="flex gap-3 flex-wrap mb-3">
         <div class="log-drop-zone" :class="{ drag: dragOver, 'has-file': hasFile }"
           @click="onDropZoneClick" @dragover.prevent="dragOver=true" @dragleave="dragOver=false" @drop="onDrop">
-          <div class="text-3xl mb-1">{{ dropIcon }}</div>
+          <div class="text-3xl mb-1">
+            <AppIcon :name="hasFile ? 'circle-check' : 'file'" size="1.9rem" />
+          </div>
           <div class="text-sm text-slate-500 dark:text-slate-400">{{ dropLabel }}</div>
           <div v-if="dropName" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">{{ dropName }}</div>
           <input id="logFileInput" type="file" accept=".log,.txt" class="hidden" @change="onLogFileChange" />
@@ -611,7 +614,7 @@ function downloadLog() {
         <div class="flex flex-col gap-1.5 p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 min-w-[200px]">
           <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">协议强制模式</div>
           <label class="flex items-center gap-2 text-sm cursor-pointer dark:text-slate-400">
-            <input type="radio" v-model="forceProto" value="auto" class="accent-blue-500" /> 🔍 自动识别（推荐）
+            <input type="radio" v-model="forceProto" value="auto" class="accent-blue-500" /> <AppIcon name="search" size="0.95rem" /> 自动识别（推荐）
           </label>
           <label class="flex items-center gap-2 text-sm cursor-pointer dark:text-slate-400">
             <input type="radio" v-model="forceProto" value="104" class="accent-blue-500" /> <span class="proto-104">104</span> 强制 IEC 104
@@ -652,10 +655,11 @@ function downloadLog() {
 
       <div class="flex items-center gap-3 flex-wrap mb-4">
         <button class="btn btn-primary" :disabled="parsing || !parseEnabled()" @click="parseLog">
-          {{ parsing ? '⏳ 解析中...' : '▶ 解析 Log' }}
+          <AppIcon :name="parsing ? 'loader' : 'play'" size="1rem" />
+          {{ parsing ? '解析中...' : '解析 Log' }}
         </button>
-        <button class="btn btn-green" :disabled="!downloadEnabled" @click="downloadLog">⬇ 下载解析结果</button>
-        <button class="btn btn-ghost" @click="clearAll">🗑 清空</button>
+        <button class="btn btn-green" :disabled="!downloadEnabled" @click="downloadLog"><AppIcon name="download" size="1rem" />下载解析结果</button>
+        <button class="btn btn-ghost" @click="clearAll"><AppIcon name="trash" size="1rem" />清空</button>
         <span class="text-xs text-slate-400">{{ parseStatus }}</span>
       </div>
 

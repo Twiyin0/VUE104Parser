@@ -7,6 +7,14 @@ export function esc(s: unknown): string {
     .replace(/"/g, '&quot;')
 }
 
+export function htmlIcon(name: string, cls = '', label = ''): string {
+  const className = ['app-icon', cls].filter(Boolean).join(' ')
+  const attrs = label
+    ? ` role="img" aria-label="${esc(label)}"`
+    : ' aria-hidden="true"'
+  return `<span class="${className}" style="--icon-url:url(/iconLib/${esc(name)}.svg)"${attrs}></span>`
+}
+
 /** 地址十六进制显示 */
 export function addrHex(addr: unknown, proto?: string): string {
   const n = Number(addr) || 0

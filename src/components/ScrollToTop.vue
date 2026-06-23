@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import AppIcon from './AppIcon.vue'
 
 const visible = ref(false)
 let ticking = false
@@ -36,7 +37,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
              flex items-center justify-center text-2xl font-black"
       title="回到顶部"
     >
-      ↑
+      <AppIcon name="arrow-up" size="1.1rem" />
     </button>
   </Transition>
 </template>
