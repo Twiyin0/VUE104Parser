@@ -380,6 +380,24 @@
     @apply rounded-md px-1.5 py-0.5 text-xs text-slate-700 dark:text-slate-100;
     background: rgba(148, 163, 184, 0.18);
   }
+  .protocol-hint {
+    @apply mb-3 rounded-lg border px-3 py-2 text-xs text-slate-500 dark:text-slate-400;
+    border-color: rgba(226, 232, 240, 0.92);
+    background: rgba(248, 250, 252, 0.9);
+  }
+  .dark .protocol-hint {
+    border-color: rgba(51, 65, 85, 0.92);
+    background: rgba(51, 65, 85, 0.36);
+  }
+  .protocol-hint-row { @apply flex flex-wrap items-center gap-x-2 gap-y-1; }
+  .protocol-hint-title { @apply inline-flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300; }
+  .protocol-hint-item { @apply inline-flex items-center gap-1 whitespace-nowrap; }
+  .protocol-hint-item code {
+    @apply rounded-md px-1.5 py-0.5 text-[11px] leading-none text-slate-700 dark:text-slate-100;
+    background: rgba(148, 163, 184, 0.2);
+  }
+  .protocol-hint-arrow { @apply text-slate-400 dark:text-slate-500; }
+  .protocol-hint-sep { @apply text-slate-300 dark:text-slate-600; }
 
   .theme-control { @apply flex items-center gap-2 flex-wrap; }
   .theme-control-item {

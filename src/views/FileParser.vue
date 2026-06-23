@@ -565,11 +565,19 @@ function downloadLog() {
 
   const collapsed = el.classList.toggle('collapsed')
   if (collapsed) {
+    if (body.style.maxHeight === 'none') {
+      body.style.maxHeight = body.scrollHeight + 'px'
+      void body.offsetHeight
+    }
     body.style.maxHeight = '0'
     body.style.opacity = '0'
   } else {
     body.style.maxHeight = body.scrollHeight + 'px'
     body.style.opacity = '1'
+    body.addEventListener('transitionend', (event) => {
+      if (event.target !== body) return
+      body.style.maxHeight = 'none'
+    }, { once: true })
   }
 }
 </script>

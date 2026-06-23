@@ -25,6 +25,20 @@ function syncBodyHeight() {
   bodyRef.value.style.maxHeight = `${contentRef.value.scrollHeight}px`
 }
 
+function releaseBodyHeight() {
+  if (!bodyRef.value || collapsed.value) return
+  bodyRef.value.style.maxHeight = 'none'
+}
+
+function animateOpen() {
+  if (!bodyRef.value) return
+  syncBodyHeight()
+  bodyRef.value.addEventListener('transitionend', (event) => {
+    if (event.target !== bodyRef.value) return
+    releaseBodyHeight()
+  }, { once: true })
+}
+
 function notify(open: boolean) {
   emit('update:open', open)
 }
@@ -33,9 +47,16 @@ function toggle() {
   if (collapsed.value) {
     collapsed.value = false
     notify(true)
-    nextTick(syncBodyHeight)
+    nextTick(() => {
+      animateOpen()
+      requestAnimationFrame(releaseBodyHeight)
+    })
   } else {
     if (bodyRef.value) {
+      if (bodyRef.value.style.maxHeight === 'none' && contentRef.value) {
+        bodyRef.value.style.maxHeight = `${contentRef.value.scrollHeight}px`
+        void bodyRef.value.offsetHeight
+      }
       syncBodyHeight()
       requestAnimationFrame(() => {
         if (bodyRef.value) bodyRef.value.style.maxHeight = '0px'
@@ -52,11 +73,18 @@ function toggle() {
 function open() {
   collapsed.value = false
   notify(true)
-  nextTick(syncBodyHeight)
+  nextTick(() => {
+    animateOpen()
+    requestAnimationFrame(releaseBodyHeight)
+  })
 }
 
 function close() {
   if (bodyRef.value) {
+    if (bodyRef.value.style.maxHeight === 'none' && contentRef.value) {
+      bodyRef.value.style.maxHeight = `${contentRef.value.scrollHeight}px`
+      void bodyRef.value.offsetHeight
+    }
     syncBodyHeight()
     requestAnimationFrame(() => {
       if (bodyRef.value) bodyRef.value.style.maxHeight = '0px'

@@ -60,12 +60,24 @@ function toggleBlockById(id: string) {
   if (!body) return
 
   const collapsed = card.classList.toggle('collapsed')
+  if (!collapsed && body.style.maxHeight === 'none') {
+    body.style.maxHeight = `${body.scrollHeight}px`
+  }
   body.style.maxHeight = collapsed ? '0px' : `${body.scrollHeight}px`
   body.style.opacity = collapsed ? '0.05' : '1'
+
+  if (!collapsed) {
+    body.addEventListener('transitionend', (event) => {
+      if (event.target !== body) return
+      body.style.maxHeight = 'none'
+      scheduleAncestorRefresh(card)
+    }, { once: true })
+  }
 
   scheduleAncestorRefresh(card)
   body.addEventListener('transitionend', (event) => {
     if (event.target !== body) return
+    if (collapsed) body.style.maxHeight = '0px'
     scheduleAncestorRefresh(card)
   }, { once: true })
 }
@@ -499,13 +511,33 @@ function renderAll(results: any[]) {
                  rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 resize-y
                  focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      <div class="mb-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
-        <span class="inline-flex items-center gap-1.5">
-          <AppIcon name="circle-information" size="0.95rem" />
-          协议自动识别：<code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">68...16</code>(L/L/68H结构) → 101可变帧 |
-        </span>
-        <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">10...16</code>(6字节) → 101固定帧 |
-        <code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">68...</code>(无16H结尾) → 104
+      <div class="protocol-hint">
+        <div class="protocol-hint-row">
+          <span class="protocol-hint-title">
+            <AppIcon name="circle-information" size="0.95rem" />
+            协议自动识别：
+          </span>
+          <span class="protocol-hint-item">
+            <code>68...16</code>
+            <span>(L/L/68H结构)</span>
+            <span class="protocol-hint-arrow">→</span>
+            <span>101可变帧</span>
+          </span>
+          <span class="protocol-hint-sep">|</span>
+          <span class="protocol-hint-item">
+            <code>10...16</code>
+            <span>(6字节)</span>
+            <span class="protocol-hint-arrow">→</span>
+            <span>101固定帧</span>
+          </span>
+          <span class="protocol-hint-sep">|</span>
+          <span class="protocol-hint-item">
+            <code>68...</code>
+            <span>(无16H结尾)</span>
+            <span class="protocol-hint-arrow">→</span>
+            <span>104</span>
+          </span>
+        </div>
       </div>
 
       <div class="flex gap-2.5 mb-6 flex-wrap">

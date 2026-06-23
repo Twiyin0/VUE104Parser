@@ -138,17 +138,23 @@ export const useDbStore = defineStore('db', () => {
       curTable.value === FULL_TABLE_NAME ||
       (is101 && !follow101Transfer)
 
+    const fromAll = (map: Map<number, string>) => map.get(value) ?? ''
+    const fromSwitch = (map: Map<number, string>) => map.get(value - offset) ?? ''
+    const preferSwitch = (switchMap: Map<number, string>, allMap: Map<number, string>) => {
+      return fromSwitch(switchMap) || fromAll(allMap)
+    }
+
     if (type === 'yx') {
-      return useAllTable ? (allYXPoint.value.get(value) ?? '') : (switchYXPoint.value.get(value - offset) ?? '')
+      return useAllTable ? fromAll(allYXPoint.value) : preferSwitch(switchYXPoint.value, allYXPoint.value)
     }
     if (type === 'yc') {
-      return useAllTable ? (allYCPoint.value.get(value) ?? '') : (switchYCPoint.value.get(value - offset) ?? '')
+      return useAllTable ? fromAll(allYCPoint.value) : preferSwitch(switchYCPoint.value, allYCPoint.value)
     }
     if (type === 'yk') {
-      return useAllTable ? (allYKPoint.value.get(value) ?? '') : (switchYKPoint.value.get(value - offset) ?? '')
+      return useAllTable ? fromAll(allYKPoint.value) : preferSwitch(switchYKPoint.value, allYKPoint.value)
     }
     if (type === 'en') {
-      return useAllTable ? (allENPoint.value.get(value) ?? '') : (switchENPoint.value.get(value - offset) ?? '')
+      return useAllTable ? fromAll(allENPoint.value) : preferSwitch(switchENPoint.value, allENPoint.value)
     }
     if (type === 'para') return paraMap.value.get(value) ?? ''
     return ''
